@@ -6,7 +6,6 @@
   import Login from '../components/Login.svelte';
   import "../app.css";
 
-  // Layout for rendering content based on logged-in status
   let isLoggedIn = false;
   let isLoginModalOpen = false;
   let isRegisterModalOpen = false;
@@ -19,6 +18,9 @@
     isLoggedIn = true;
     userId = newUserId;
     closeLoginModal();
+
+    // Navigate to the battle list after successful login
+    goto('/battle');
   };
 
   const handleLogout = () => {
@@ -30,15 +32,15 @@
   };
 
   onMount(() => {
-  const token = localStorage.getItem('token');
-  const storedUserId = localStorage.getItem('userId');
-  if (token && storedUserId) {
-    isLoggedIn = true;
-    userId = storedUserId;
-  } else if (window.location.pathname === '/') {
-    goto('/');
-  }
-});
+    const token = localStorage.getItem('token');
+    const storedUserId = localStorage.getItem('userId');
+    if (token && storedUserId) {
+      isLoggedIn = true;
+      userId = storedUserId;
+    } else if (window.location.pathname === '/') {
+      goto('/');
+    }
+  });
 
   const openLoginModal = () => {
     isLoginModalOpen = true;
@@ -64,6 +66,5 @@
 {/if}
 
 <main>
-  <!-- Child routes rendered via the slot -->
   <slot />
 </main>

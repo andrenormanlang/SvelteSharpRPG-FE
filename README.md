@@ -17,7 +17,7 @@ npm install
 npm start
 ```
 
-This will start the development server, and your app will be accessible at [http://localhost:5173](http://localhost:5173)by default.
+This will start the development server, and your app will be accessible at [http://localhost:5173](http://localhost:5173) by default.
 
 ### Backend 🐉
 

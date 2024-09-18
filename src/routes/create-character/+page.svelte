@@ -1,11 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import axios from 'axios';
-
-  interface Class {
-    id: string;  
-    name: string;
-  }
+  import type { Class } from '../../types/class';
 
   export let userId: string;
   let characterName = '';

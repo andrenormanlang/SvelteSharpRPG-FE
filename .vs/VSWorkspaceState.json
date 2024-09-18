@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\components",
+    "\\src\\lib",
+    "\\src\\routes",
+    "\\src\\routes\\battle",
+    "\\src\\routes\\battles",
+    "\\src\\routes\\battle\\ [id]",
+    "\\static"
+  ],
+  "SelectedNode": "\\src\\components\\Navbar.svelte",
+  "PreviewInSolutionExplorer": false
+}
