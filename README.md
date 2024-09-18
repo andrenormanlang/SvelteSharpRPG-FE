@@ -1,8 +1,8 @@
-# Legends of Eldoria ⚔️🪄🛡️
+# Legends of Runestone 🪨🧙‍♂️📜
 
 ## Description
 
-Legends of Eldoria is an exciting fullstack RPG game currently under development. Built using Svelte for the frontend and C# (ASP.NET Core) for the backend, the game offers players the chance to create a unique character, battle fierce monsters, and level up as they gain experience. The game will also feature multiplayer support, allowing players to team up with friends to face powerful enemies in epic battles. 🧝‍♀️🧙‍♂️
+Legends of Runestone is an exciting fullstack RPG game currently under development. Built using Svelte for the frontend and C# (ASP.NET Core) for the backend, the game offers players the chance to create a unique character, battle fierce monsters, and level up as they gain experience. The game will also feature multiplayer support, allowing players to team up with friends to face powerful enemies in epic battles. 🧝‍♀️🧙‍♂️
 
 As the game evolves, new features, storylines, and interactive elements will be added, ensuring a rich and engaging RPG experience.
 
