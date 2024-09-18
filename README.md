@@ -21,9 +21,16 @@ npm start
 
 This will start the development server, and your app will be accessible at [http://localhost:5173](http://localhost:5173) by default.
 
-### Backend 🐉
+### Backend Development 🛠️🐉
 
-To run the backend, first clone the repository SvelteSharp API and follow the instructions in its README file.
+Legends of Runestone RPG 🪨🧙‍♂️ project is powered by a custom-built API using C# (ASP.NET Core). The backend handles all character management, battles, and game progression logic. The backend is continuously under development to enhance gameplay features.
+
+#### Links
+
+Backend Repository: [!C# RPG API Repository](https://github.com/andrenormanlang/csharp-rpg-api)
+Hosted API Endpoint: [!Azure deployed API](https://csharprpg.azurewebsites.net/api/)
+
+To run the backend, first clone the repository C# RPG API and follow the instructions in its README file.
 
 To run the backend be sure to have .NET Core installed. You can download it [here](https://dotnet.microsoft.com/download). ⚔️
 
@@ -111,4 +118,3 @@ After running the frontend and backend, you can access the game in your browser 
 ## Stay Tuned for Updates 🎉
 
 We're constantly working on making Legends of Eldoria a more immersive and exciting RPG experience. Keep checking back for updates and new features!
-
