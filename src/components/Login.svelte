@@ -2,24 +2,37 @@
   import { createEventDispatcher } from 'svelte';
   let email = '';
   let password = '';
+  let error = ''; // Declare error here
+
+  const baseURL = 'https://localhost:5000/api/'; // Ensure baseURL is defined
 
   const dispatch = createEventDispatcher();
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('https://csharprpg.azurewebsites.net/api/Login/login', {
+      const res = await fetch(baseURL + 'Login/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-      const data = await response.json();
-      const token = data.token;
-      const userId = data.userId;
 
-      // Dispatch login event with token and userId
-      dispatch('login', { token, userId });
-    } catch (error) {
-      console.error('Login failed:', error);
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token); // Store token in localStorage
+        localStorage.setItem('userId', data.userId); // Store userId in localStorage
+        dispatch('login', { token: data.token, userId: data.userId });  // Dispatch login success
+      } else {
+        const errorData = await res.json(); // Get error message from the response
+        error = errorData.message || 'An error occurred';
+      }
+    } catch (err) {
+      console.log('Network error:', err);
+      error = 'A network error occurred. Please try again later.';
     }
   };
 </script>
@@ -38,4 +51,9 @@
     class="input input-bordered w-full text-sm p-2"
   />
   <button on:click={handleLogin} class="btn btn-primary w-full">Login</button>
+
+  <!-- Display error message if any -->
+  {#if error}
+    <p class="text-red-500">{error}</p>
+  {/if}
 </div>

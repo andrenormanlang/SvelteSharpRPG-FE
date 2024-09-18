@@ -20,21 +20,27 @@
   $: slug = $page.params.slug;
   
   onMount(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      battleDetails = battleResponse.data;
+  try {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId'); // Get userId from local storage
 
-      const characterResponse = await axios.get('https://localhost:5000/api/character/user', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      character = characterResponse.data;
-    } catch (error) {
-      console.error('Failed to fetch battle details:', error);
-    }
-  });
+    // Fetch the battle details
+    const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    battleDetails = battleResponse.data;
+
+    // Fetch the character details using the userId
+    const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    character = characterResponse.data[0]; // Assuming the API returns an array of characters
+
+  } catch (error) {
+    console.error('Failed to fetch battle and character details:', error);
+  }
+});
+
 
   // Start the battle by posting to the backend
   const startBattle = async () => {
