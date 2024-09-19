@@ -1,160 +1,199 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh, TextureLoader, Group } from 'three';
+  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh } from 'three';
+  import { tweened } from 'svelte/motion';
+  import { page } from '$app/stores';
+  import axios from 'axios';
 
+  // Import types for battles and characters
+  import type { Battle } from '../../../types/battle';
+  import type { Character } from '../../../types/character';
+
+  let battleDetails: Battle | null = null;
+  let character: Character | null = null;
+  let playerRoll = 0;
+  let enemyRoll = 0;
+  let resultMessage = '';
+  let isBattleOver = false;
+  let slug = '';
+  let playerHealth = 100;
+  let enemyHealth = 100;
+  let currentRound = 1;
+  let maxRounds = 3;
+
+  // Dice settings
+  let diceNum = 1;
+  let dieType = 6;  // Default to a 6-sided die for now
+  let result = 0;
+
+  // Three.js variables
+  let diceRotation = tweened(0, { duration: 400 });
+  let enemyDiceRotation = tweened(0, { duration: 400 });
   let scene: Scene;
   let camera: PerspectiveCamera;
   let renderer: WebGLRenderer;
-  let diceGroup: Group;  // Group to hold all dice
-  let diceOptions = [4, 6, 8, 10, 12, 20]; // Available dice types
-  let selectedDice = [6, 20];  // Default dice selection
-  let rollResults = [];
-  let totalRoll = 0;
-  let isRolling = false;
+  let playerDice: Mesh;
+  let enemyDice: Mesh;
 
-  onMount(() => {
-    scene = new Scene();
+  $: slug = $page.params.slug;
 
-    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 10;
+  onMount(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
 
-    renderer = new WebGLRenderer({ antialias: true });
-    const diceContainer = document.querySelector('.dice-container');
-    if (diceContainer) {
-      diceContainer.appendChild(renderer.domElement);
-    }
-    renderer.setSize(400, 400);
+      const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      battleDetails = battleResponse.data;
 
-    diceGroup = new Group();
-    scene.add(diceGroup);
+      const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      character = characterResponse.data[0];
+      
+      // Initialize Three.js scene
+      scene = new Scene();
+      camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+      renderer = new WebGLRenderer();
 
-    // Initialize dice
-    selectedDice.forEach((dice) => {
-      addDiceToScene(dice);
-    });
-
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-
-      if (isRolling) {
-        diceGroup.rotation.x += 0.05;
-        diceGroup.rotation.y += 0.05;
+      const diceContainer = document.querySelector(".dice-container");
+      if (diceContainer) {
+        diceContainer.appendChild(renderer.domElement);
       }
-      renderer.render(scene, camera);
-    };
-    animate();
+
+      renderer.setSize(200, 200);
+
+      // Create player dice (Cube)
+      const geometry = new BoxGeometry();
+      const playerMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
+      playerDice = new Mesh(geometry, playerMaterial);
+      scene.add(playerDice);
+
+      // Create enemy dice (Cube)
+      const enemyMaterial = new MeshBasicMaterial({ color: 0xff0000 });
+      enemyDice = new Mesh(geometry, enemyMaterial);
+      enemyDice.position.x = -2; // Position enemy dice next to the player's dice
+      scene.add(enemyDice);
+
+      // Start the render loop
+      const animate = function () {
+        requestAnimationFrame(animate);
+        playerDice.rotation.x += 0.01;
+        playerDice.rotation.y += 0.01;
+        enemyDice.rotation.x += 0.01;
+        enemyDice.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      };
+      animate();
+      
+    } catch (error) {
+      console.error('Failed to fetch battle and character details:', error);
+    }
   });
 
-  // Add a dice to the scene
-  function addDiceToScene(diceType: number) {
-    const geometry = new BoxGeometry(1, 1, 1);  // Use different geometry for various dice types
-    const material = new MeshBasicMaterial({ color: Math.random() * 0xffffff });
-    const dice = new Mesh(geometry, material);
+  // Rolling logic
+  function rollDice() {
+    playerRoll = Math.floor(Math.random() * dieType) + 1;  // Simulate the player dice roll
+    enemyRoll = Math.floor(Math.random() * 6) + 1;         // Simulate the enemy dice roll (D6)
+    
+    if (playerRoll > enemyRoll) {
+      enemyHealth -= playerRoll;
+      resultMessage = 'You won this round!';
+    } else {
+      playerHealth -= enemyRoll;
+      resultMessage = 'You lost this round!';
+    }
 
-    dice.position.x = Math.random() * 4 - 2;  // Random positioning
-    dice.position.y = Math.random() * 4 - 2;
+    if (playerHealth <= 0) {
+      resultMessage = 'You lost the battle!';
+      isBattleOver = true;
+    } else if (enemyHealth <= 0) {
+      resultMessage = 'You won the battle!';
+      isBattleOver = true;
+    }
 
-    diceGroup.add(dice);
+    diceRotation.set(Math.random() * 6 + 1);  // Trigger the dice animation
+    enemyDiceRotation.set(Math.random() * 6 + 1); // Trigger enemy dice animation
   }
 
-  // Remove all dice from the scene and reinitialize
-  function resetScene() {
-    diceGroup.clear();
-    selectedDice.forEach((dice) => {
-      addDiceToScene(dice);
-    });
+  function upNum() {
+    diceNum++;
   }
 
-  // Function to roll dice
-  function rollAllDice() {
-    if (isRolling) return;
-    isRolling = true;
-    rollResults = [];
-    totalRoll = 0;
-
-    // Simulate dice roll (stop after some time)
-    setTimeout(() => {
-      diceGroup.rotation.x = 0;
-      diceGroup.rotation.y = 0;
-      isRolling = false;
-
-      // Generate roll results
-      selectedDice.forEach((dice) => {
-        const result = Math.floor(Math.random() * dice) + 1;
-        rollResults.push(result);
-        totalRoll += result;
-      });
-    }, 2000);  // Simulate 2-second dice roll
+  function downNum() {
+    diceNum = Math.max(1, diceNum);
   }
 
-  // Add a new dice type to the selected dice array
-  function addDice(diceType: number) {
-    selectedDice.push(diceType);
-    resetScene();
+  function upType() {
+    dieType = dieType === 20 ? 4 : dieType + 2; // Cycle through common die types
   }
 
-  // Remove a dice from the selected list
-  function removeDice(index: number) {
-    selectedDice.splice(index, 1);
-    resetScene();
+  function downType() {
+    dieType = dieType === 4 ? 20 : dieType - 2;
   }
 </script>
 
 <style>
+  .dice-roll {
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .health-bar {
+    width: 100%;
+    background-color: #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  
+  .health-fill {
+    height: 20px;
+    background-color: #4caf50;
+    transition: width 0.5s ease;
+  }
+
+  .enemy-health-fill {
+    background-color: #ff4d4d;
+    transition: width 0.5s ease;
+  }
+
   .dice-container {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
-    height: 400px;
-    margin-bottom: 20px;
-  }
-
-  button {
+    height: 200px;
     margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  .dice-selector {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .total-display {
-    font-size: 32px;
-    font-weight: bold;
   }
 </style>
 
-<!-- UI Layout -->
-<h2>Roll Dice</h2>
-<div class="dice-container"></div>
+<main>
+  <div>
+    <h2>Battle: {battleDetails?.battleName}</h2>
+    <div class="health-bar">
+      <div class="health-fill" style="width: {playerHealth}%"></div>
+    </div>
+    <div class="health-bar">
+      <div class="enemy-health-fill" style="width: {enemyHealth}%"></div>
+    </div>
+    <h4>{resultMessage}</h4>
 
-<!-- Roll button -->
-<div>
-  <button on:click={rollAllDice} disabled={isRolling}>Roll</button>
-</div>
+    {#if !isBattleOver}
+      <div class="dice-roll">
+        <h4>Roll {diceNum} D{dieType}</h4>
+        <button on:click={upNum}>Increase Dice Number</button>
+        <button on:click={downNum}>Decrease Dice Number</button>
+        <button on:click={upType}>Increase Dice Type</button>
+        <button on:click={downType}>Decrease Dice Type</button>
+        <button on:click={rollDice} class="btn btn-primary">Start Battle</button>
+      </div>
+    {/if}
+  </div>
 
-<!-- Total result display -->
-<h3>Total: <span class="total-display">{totalRoll}</span></h3>
+  <div class="dice-container"></div>
+</main>
 
-<!-- Dice options to select from -->
-<div class="dice-selector">
-  {#each diceOptions as dice}
-    <button on:click={() => addDice(dice)} class="dice-option">D{dice}</button>
-  {/each}
-  <button on:click={() => removeDice(selectedDice.length - 1)} class="dice-option">Remove Dice</button>
-</div>

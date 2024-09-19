@@ -28,9 +28,11 @@
 	"type": "module",
 	"dependencies": {
 		"@threlte/core": "^7.3.1",
+		"@threlte/extras": "^8.11.5",
 		"@types/jwt-decode": "^3.1.0",
 		"axios": "^1.7.7",
 		"jwt-decode": "^4.0.0",
+		"svelte-cubed": "^0.2.1",
 		"three": "^0.168.0"
 	}
 }
