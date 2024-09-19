@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh } from 'three';
   import { tweened } from 'svelte/motion';
-  import { page } from '$app/stores';
+  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh } from 'three';
   import axios from 'axios';
 
-  // Import types for battles and characters
+  // Types
   import type { Battle } from '../../../types/battle';
   import type { Character } from '../../../types/character';
 
@@ -24,19 +23,17 @@
   // Dice settings
   let diceNum = 1;
   let dieType = 6;  // Default to a 6-sided die for now
-  let result = 0;
 
-  // Three.js variables
-  let diceRotation = tweened(0, { duration: 400 });
-  let enemyDiceRotation = tweened(0, { duration: 400 });
+  // Three.js variables for player and enemy dice
   let scene: Scene;
   let camera: PerspectiveCamera;
   let renderer: WebGLRenderer;
   let playerDice: Mesh;
   let enemyDice: Mesh;
+  let diceRotation = tweened(0, { duration: 500 });  // Animation timing
+  let enemyDiceRotation = tweened(0, { duration: 500 });
 
-  $: slug = $page.params.slug;
-
+  // Fetch battle and character data
   onMount(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -51,61 +48,71 @@
         headers: { Authorization: `Bearer ${token}` },
       });
       character = characterResponse.data[0];
-      
+
       // Initialize Three.js scene
-      scene = new Scene();
-      camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.z = 5;
-      renderer = new WebGLRenderer();
-
-      const diceContainer = document.querySelector(".dice-container");
-      if (diceContainer) {
-        diceContainer.appendChild(renderer.domElement);
-      }
-
-      renderer.setSize(200, 200);
-
-      // Create player dice (Cube)
-      const geometry = new BoxGeometry();
-      const playerMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
-      playerDice = new Mesh(geometry, playerMaterial);
-      scene.add(playerDice);
-
-      // Create enemy dice (Cube)
-      const enemyMaterial = new MeshBasicMaterial({ color: 0xff0000 });
-      enemyDice = new Mesh(geometry, enemyMaterial);
-      enemyDice.position.x = -2; // Position enemy dice next to the player's dice
-      scene.add(enemyDice);
-
-      // Start the render loop
-      const animate = function () {
-        requestAnimationFrame(animate);
-        playerDice.rotation.x += 0.01;
-        playerDice.rotation.y += 0.01;
-        enemyDice.rotation.x += 0.01;
-        enemyDice.rotation.y += 0.01;
-        renderer.render(scene, camera);
-      };
-      animate();
-      
+      initThreeScene();
     } catch (error) {
-      console.error('Failed to fetch battle and character details:', error);
+      console.error('Error fetching battle or character details:', error);
     }
   });
 
-  // Rolling logic
-  function rollDice() {
-    playerRoll = Math.floor(Math.random() * dieType) + 1;  // Simulate the player dice roll
-    enemyRoll = Math.floor(Math.random() * 6) + 1;         // Simulate the enemy dice roll (D6)
-    
-    if (playerRoll > enemyRoll) {
-      enemyHealth -= playerRoll;
-      resultMessage = 'You won this round!';
-    } else {
-      playerHealth -= enemyRoll;
-      resultMessage = 'You lost this round!';
+  // Initialize Three.js scene and dice meshes
+  function initThreeScene() {
+    scene = new Scene();
+    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+    renderer = new WebGLRenderer({ antialias: true });
+    renderer.setSize(200, 200);
+
+    const diceContainer = document.querySelector(".dice-container");
+    if (diceContainer) {
+      diceContainer.appendChild(renderer.domElement);
     }
 
+    // Create player dice
+    const playerGeometry = new BoxGeometry();
+    const playerMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
+    playerDice = new Mesh(playerGeometry, playerMaterial);
+    scene.add(playerDice);
+
+    // Create enemy dice
+    const enemyGeometry = new BoxGeometry();
+    const enemyMaterial = new MeshBasicMaterial({ color: 0xff0000 });
+    enemyDice = new Mesh(enemyGeometry, enemyMaterial);
+    enemyDice.position.x = 2;
+    scene.add(enemyDice);
+
+    // Start animation loop
+    animate();
+  }
+
+  // Animation loop for rotating dice
+  function animate() {
+    requestAnimationFrame(animate);
+
+    playerDice.rotation.x += 0.02;
+    playerDice.rotation.y += 0.02;
+    enemyDice.rotation.x += 0.02;
+    enemyDice.rotation.y += 0.02;
+
+    renderer.render(scene, camera);
+  }
+
+  // Roll dice for player and enemy
+  function rollDice() {
+    playerRoll = Math.floor(Math.random() * dieType) + 1;
+    enemyRoll = Math.floor(Math.random() * 6) + 1;
+
+    // Update health and result message
+    if (playerRoll > enemyRoll) {
+      enemyHealth -= playerRoll;
+      resultMessage = `You won this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
+    } else {
+      playerHealth -= enemyRoll;
+      resultMessage = `You lost this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
+    }
+
+    // End game if any player's health reaches 0
     if (playerHealth <= 0) {
       resultMessage = 'You lost the battle!';
       isBattleOver = true;
@@ -114,43 +121,34 @@
       isBattleOver = true;
     }
 
-    diceRotation.set(Math.random() * 6 + 1);  // Trigger the dice animation
-    enemyDiceRotation.set(Math.random() * 6 + 1); // Trigger enemy dice animation
+    // Simulate dice roll animation using tweened values
+    diceRotation.set(Math.random() * Math.PI * 2);  
+    enemyDiceRotation.set(Math.random() * Math.PI * 2);
   }
 
-  function upNum() {
-    diceNum++;
-  }
-
-  function downNum() {
-    diceNum = Math.max(1, diceNum);
-  }
-
+  // Dice type adjustments
   function upType() {
-    dieType = dieType === 20 ? 4 : dieType + 2; // Cycle through common die types
+    dieType = dieType === 20 ? 6 : dieType + 2;
   }
 
   function downType() {
-    dieType = dieType === 4 ? 20 : dieType - 2;
+    dieType = dieType === 6 ? 20 : dieType - 2;
   }
 </script>
 
 <style>
   .dice-roll {
-    font-family: 'Courier New', Courier, monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    text-align: center;
+    margin: 20px;
   }
 
   .health-bar {
     width: 100%;
-    background-color: #ccc;
+    background-color: #ddd;
     border-radius: 10px;
-    overflow: hidden;
     margin-bottom: 10px;
   }
-  
+
   .health-fill {
     height: 20px;
     background-color: #4caf50;
@@ -158,7 +156,8 @@
   }
 
   .enemy-health-fill {
-    background-color: #ff4d4d;
+    height: 20px;
+    background-color: #f44336;
     transition: width 0.5s ease;
   }
 
@@ -166,14 +165,20 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    height: 200px;
     margin-top: 20px;
+  }
+
+  button {
+    margin: 10px;
+    padding: 10px;
+    font-size: 18px;
+    border-radius: 5px;
   }
 </style>
 
 <main>
   <div>
-    <h2>Battle: {battleDetails?.battleName}</h2>
+    <h2>{battleDetails?.battleName}</h2>
     <div class="health-bar">
       <div class="health-fill" style="width: {playerHealth}%"></div>
     </div>
@@ -185,15 +190,11 @@
     {#if !isBattleOver}
       <div class="dice-roll">
         <h4>Roll {diceNum} D{dieType}</h4>
-        <button on:click={upNum}>Increase Dice Number</button>
-        <button on:click={downNum}>Decrease Dice Number</button>
         <button on:click={upType}>Increase Dice Type</button>
-        <button on:click={downType}>Decrease Dice Type</button>
-        <button on:click={rollDice} class="btn btn-primary">Start Battle</button>
+        <button on:click={rollDice}>Roll Dice</button>
       </div>
     {/if}
   </div>
 
   <div class="dice-container"></div>
 </main>
-
