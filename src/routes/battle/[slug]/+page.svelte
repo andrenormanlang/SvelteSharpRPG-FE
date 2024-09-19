@@ -1,132 +1,160 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import axios from 'axios';
-  import { page } from '$app/stores';
-  import type { Battle } from '../../../types/battle';
-  import type { Character } from '../../../types/character';
-  import { tweened } from 'svelte/motion';  // For dice animation
+  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh, TextureLoader, Group } from 'three';
 
-  let battleDetails: Battle | null = null;
-  let character: Character | null = null;
-  let playerRoll = 0;
-  let enemyRoll = 0;
-  let resultMessage = '';
-  let isBattleOver = false;
-  let slug = '';
-  let errorMessage = ''; // Declare the errorMessage variable
-  let playerHealth = 100;  // Example values for health
-  let enemyHealth = 100;
-  let currentRound = 1;  // Keep track of rounds
-  let maxRounds = 3;
-  let diceValue = tweened(0, { duration: 400 });  // For dice animation
+  let scene: Scene;
+  let camera: PerspectiveCamera;
+  let renderer: WebGLRenderer;
+  let diceGroup: Group;  // Group to hold all dice
+  let diceOptions = [4, 6, 8, 10, 12, 20]; // Available dice types
+  let selectedDice = [6, 20];  // Default dice selection
+  let rollResults = [];
+  let totalRoll = 0;
+  let isRolling = false;
 
-  // Fetch battle and character details on mount
-  $: slug = $page.params.slug;
+  onMount(() => {
+    scene = new Scene();
 
-  onMount(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId'); // Get userId from local storage
+    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 10;
 
-      // Fetch the battle details
-      const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      battleDetails = battleResponse.data;
-
-      // Fetch the character details using the userId
-      const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      character = characterResponse.data[0]; // Assuming the API returns an array of characters
-    } catch (error) {
-      console.error('Failed to fetch battle and character details:', error);
+    renderer = new WebGLRenderer({ antialias: true });
+    const diceContainer = document.querySelector('.dice-container');
+    if (diceContainer) {
+      diceContainer.appendChild(renderer.domElement);
     }
+    renderer.setSize(400, 400);
+
+    diceGroup = new Group();
+    scene.add(diceGroup);
+
+    // Initialize dice
+    selectedDice.forEach((dice) => {
+      addDiceToScene(dice);
+    });
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      if (isRolling) {
+        diceGroup.rotation.x += 0.05;
+        diceGroup.rotation.y += 0.05;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
   });
 
-  // Simulate a dice roll (1 to 6)
-  function rollDice() {
-    return Math.floor(Math.random() * 6) + 1;
+  // Add a dice to the scene
+  function addDiceToScene(diceType: number) {
+    const geometry = new BoxGeometry(1, 1, 1);  // Use different geometry for various dice types
+    const material = new MeshBasicMaterial({ color: Math.random() * 0xffffff });
+    const dice = new Mesh(geometry, material);
+
+    dice.position.x = Math.random() * 4 - 2;  // Random positioning
+    dice.position.y = Math.random() * 4 - 2;
+
+    diceGroup.add(dice);
   }
 
-  // Start the battle by posting to the backend
-  const startBattle = async () => {
-    try {
-      const token = localStorage.getItem('token');
+  // Remove all dice from the scene and reinitialize
+  function resetScene() {
+    diceGroup.clear();
+    selectedDice.forEach((dice) => {
+      addDiceToScene(dice);
+    });
+  }
 
-      // Check if character is defined
-      if (!character || !character.id) {
-        throw new Error("Character is not defined or missing ID");
-      }
+  // Function to roll dice
+  function rollAllDice() {
+    if (isRolling) return;
+    isRolling = true;
+    rollResults = [];
+    totalRoll = 0;
 
-      // Simulate a round of battle
-      for (let round = 1; round <= maxRounds; round++) {
-        await new Promise(resolve => setTimeout(resolve, 1000));  // Delay between rounds
+    // Simulate dice roll (stop after some time)
+    setTimeout(() => {
+      diceGroup.rotation.x = 0;
+      diceGroup.rotation.y = 0;
+      isRolling = false;
 
-        playerRoll = rollDice();
-        enemyRoll = rollDice();
+      // Generate roll results
+      selectedDice.forEach((dice) => {
+        const result = Math.floor(Math.random() * dice) + 1;
+        rollResults.push(result);
+        totalRoll += result;
+      });
+    }, 2000);  // Simulate 2-second dice roll
+  }
 
-        // Update dice animation
-        diceValue.set(playerRoll);
+  // Add a new dice type to the selected dice array
+  function addDice(diceType: number) {
+    selectedDice.push(diceType);
+    resetScene();
+  }
 
-        if (playerRoll > enemyRoll) {
-          enemyHealth -= playerRoll;
-        } else if (enemyRoll > playerRoll) {
-          playerHealth -= enemyRoll;
-        }
-
-        // Check if battle is over
-        if (playerHealth <= 0) {
-          resultMessage = 'You lost the battle!';
-          break;
-        } else if (enemyHealth <= 0) {
-          resultMessage = 'You won the battle!';
-          character.level++;  // Level up character
-          break;
-        }
-
-        if (round === maxRounds) {
-          resultMessage = 'It’s a tie after 3 rounds!';
-        }
-      }
-
-      isBattleOver = true;
-
-    } catch (error) {
-      console.error("Battle error:", error);
-      errorMessage = "Failed to start the battle. Please try again later.";
-    }
-  };
+  // Remove a dice from the selected list
+  function removeDice(index: number) {
+    selectedDice.splice(index, 1);
+    resetScene();
+  }
 </script>
 
-<!-- Battle Details UI -->
-<div class="battle-details p-4 flex flex-col items-center space-y-4">
-  <h2 class="text-3xl font-bold mb-4 text-center">Battle: {battleDetails?.battleName}</h2>
-
-  {#if isBattleOver}
-    <div>
-      <p class="text-xl">Player Health: {playerHealth}</p>
-      <p class="text-xl">Enemy Health: {enemyHealth}</p>
-      <p class="text-xl">You rolled: {playerRoll}</p>
-      <p class="text-xl">Enemy rolled: {enemyRoll}</p>
-      <p class="text-xl font-bold mt-2">{resultMessage}</p>
-    </div>
-  {:else}
-    <div class="dice-roll">
-      <p class="text-2xl">Rolling Dice...</p>
-      <!-- Visual dice roll (can add dice images or use tweened values) -->
-      <p class="text-4xl">{diceValue}</p>
-      <button on:click={startBattle} class="btn btn-primary w-full">Start Battle</button>
-    </div>
-  {/if}
-</div>
-
 <style>
-  .dice-roll {
-    font-family: 'Courier New', Courier, monospace;
+  .dice-container {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    height: 400px;
+    margin-bottom: 20px;
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  .dice-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .total-display {
+    font-size: 32px;
+    font-weight: bold;
   }
 </style>
 
+<!-- UI Layout -->
+<h2>Roll Dice</h2>
+<div class="dice-container"></div>
+
+<!-- Roll button -->
+<div>
+  <button on:click={rollAllDice} disabled={isRolling}>Roll</button>
+</div>
+
+<!-- Total result display -->
+<h3>Total: <span class="total-display">{totalRoll}</span></h3>
+
+<!-- Dice options to select from -->
+<div class="dice-selector">
+  {#each diceOptions as dice}
+    <button on:click={() => addDice(dice)} class="dice-option">D{dice}</button>
+  {/each}
+  <button on:click={() => removeDice(selectedDice.length - 1)} class="dice-option">Remove Dice</button>
+</div>

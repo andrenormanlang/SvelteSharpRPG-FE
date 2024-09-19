@@ -1,5 +1,5 @@
 {
-	"name": "react-sharp-rpg-svelte",
+	"name": "svelte-sharp-rpg",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
@@ -14,6 +14,7 @@
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"@types/three": "^0.168.0",
 		"autoprefixer": "^10.4.20",
 		"daisyui": "^4.12.10",
 		"postcss": "^8.4.47",
@@ -26,8 +27,10 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@threlte/core": "^7.3.1",
 		"@types/jwt-decode": "^3.1.0",
 		"axios": "^1.7.7",
-		"jwt-decode": "^4.0.0"
+		"jwt-decode": "^4.0.0",
+		"three": "^0.168.0"
 	}
 }
