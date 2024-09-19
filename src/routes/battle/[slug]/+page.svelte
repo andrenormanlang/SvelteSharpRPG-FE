@@ -7,7 +7,6 @@
   import type { Character } from '../../../types/character';
   import type { Enemy } from '../../../types/enemy';
 
-  // Battle and character information
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
   let enemy: Enemy | null = null;  // Enemy details
@@ -29,9 +28,7 @@
       const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Battle Details:', battleDetails);
       battleDetails = battleResponse.data;
-      // Check if battle details contain EnemyIds
 
       // Fetch the player's character
       const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
@@ -46,7 +43,6 @@
         });
         enemy = enemyResponse.data;
       }
-
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -77,27 +73,28 @@
 </script>
 
 <style>
-  .cards-container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
+  @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+  /* Apply retro font */
+  .retro-font {
+    font-family: 'DotGothic16', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .battle-info {
+    @apply text-center text-2xl font-semibold text-gray-300 mt-6 mb-4;
   }
 
   .card {
-    border-radius: 8px;
+    background-color: #000; /* Black background for retro look */
+    color: #00ff00; /* Green text for retro terminal look */
+    border: 3px solid #008080; /* Teal border */
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 255, 0, 0.7);
     padding: 20px;
     margin: 10px;
     width: 250px;
-    background-color: #333;
-    color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-  }
-
-  .card-title {
-    font-size: 20px;
-    margin-bottom: 10px;
   }
 
   .stat {
@@ -105,107 +102,84 @@
     margin: 5px 0;
   }
 
-  .health-bar-container {
+  .progress {
     height: 15px;
-    width: 100%;
-    background-color: #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 10px 0;
+    background-color: rgba(255, 0, 0, 0.3); /* Light red for health background */
   }
 
-  .health-bar {
-    height: 100%;
-    transition: width 0.5s ease;
+  .progress-health {
+    background-color: #00ff00; /* Bright green for health bar */
   }
 
-  .player-health {
-    background-color: #4caf50;
-  }
-
-  .enemy-health {
-    background-color: #ff4d4d;
-  }
-
-  .button {
-    padding: 10px;
-    background-color: #007bff;
+  .health-label {
+    font-size: 14px;
+    text-align: center;
     color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .button:hover {
-    background-color: #0056b3;
   }
 
   .dice-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+    @apply flex justify-center mt-6;
   }
 
   .result-message {
-    font-size: 16px;
-    margin: 10px;
-    text-align: center;
+    @apply text-lg font-bold text-center my-4 text-yellow-400;
   }
 
-  .battle-info {
-    text-align: center;
-    margin-top: 20px;
+  .btn-primary {
+    @apply bg-teal-700 text-white hover:bg-teal-500;
   }
 </style>
 
 <main>
   {#if battleDetails && character && enemy}
-    <div class="battle-info">
+    <div class="battle-info retro-font">
       <h2>Battle: {battleDetails.battleName}</h2>
     </div>
 
-    <div class="cards-container">
+    <div class="cards-container flex justify-center gap-6 my-8">
       <!-- Player Card -->
-      <div class="card">
-        <div class="card-title">{character.name} (Level: {character.level})</div>
-        <div class="stat">Class: {character.className}</div>
-        <div class="stat">Attack: {character.attack}</div>
-        <div class="stat">Defense: {character.defense}</div>
-        <div class="stat">Mana: {character.mana}</div>
-        <div class="stat">Stamina: {character.stamina}</div>
+      <div class="card retro-font">
+        <h2 class="text-center text-xl mb-4">{character.name}</h2>
+        <p class="stat">Class: {character.className}</p>
+        <p class="stat">Level: {character.level}</p>
+        <p class="stat">Attack: {character.attack}</p>
+        <p class="stat">Defense: {character.defense}</p>
+        <p class="stat">Mana: {character.mana}</p>
+        <p class="stat">Stamina: {character.stamina}</p>
 
         <!-- Player health bar -->
-        <div class="health-bar-container">
-          <div class="health-bar player-health" style="width: {playerHealth}%"></div>
+        <div class="my-4">
+          <progress class="progress progress-health w-full" value={playerHealth} max="100"></progress>
+          <p class="health-label mt-2">Health: {playerHealth}%</p>
         </div>
       </div>
 
       <!-- Enemy Card -->
-      <div class="card">
-        <div class="card-title">{enemy.name} ({enemy.type})</div>
-        <div class="stat">Attack: {enemy.attack}</div>
-        <div class="stat">Defense: {enemy.defense}</div>
-        <div class="stat">Experience Reward: {enemy.experienceReward}</div>
+      <div class="card retro-font">
+        <h2 class="text-center text-xl mb-4">{enemy.name}</h2>
+        <p class="stat">Type: {enemy.type}</p>
+        <p class="stat">Attack: {enemy.attack}</p>
+        <p class="stat">Defense: {enemy.defense}</p>
+        <p class="stat">Reward: {enemy.experienceReward}</p>
 
         <!-- Enemy health bar -->
-        <div class="health-bar-container">
-          <div class="health-bar enemy-health" style="width: {enemyHealth}%"></div>
+        <div class="my-4">
+          <progress class="progress progress-health w-full" value={enemyHealth} max="100"></progress>
+          <p class="health-label mt-2">Health: {enemyHealth}%</p>
         </div>
       </div>
     </div>
 
     <!-- Dice Roll Result -->
-    <div class="result-message">
+    <div class="result-message retro-font">
       {resultMessage}
     </div>
 
     <!-- Dice roll button -->
     <div class="dice-container">
-      <button class="button" on:click={rollDice} disabled={isBattleOver}>
+      <button class="btn btn-primary retro-font" on:click={rollDice} disabled={isBattleOver}>
         Roll Dice
       </button>
     </div>
   {/if}
 </main>
-
