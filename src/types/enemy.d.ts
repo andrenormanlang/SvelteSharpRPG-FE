@@ -6,6 +6,7 @@ export interface Enemy {
     attack: number;
     defense: number;
     experience: number;
+    speed: number;
     experienceReward: number;
   }
   

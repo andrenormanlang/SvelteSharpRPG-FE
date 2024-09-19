@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import axios from 'axios';
   import { page } from '$app/stores';  // To get URL params
+  import image from '../../../lib/images/heart.png';  
 
   import type { Battle } from '../../../types/battle';
   import type { Character } from '../../../types/character';
@@ -70,6 +71,17 @@
       isBattleOver = true;
     }
   }
+
+  // Function to determine the health bar color based on percentage
+  function healthBarColor(health: number): string {
+    if (health >= 60) {
+      return 'bg-green-500';
+    } else if (health >= 30) {
+      return 'bg-yellow-500';
+    } else {
+      return 'bg-red-500';
+    }
+  }
 </script>
 
 <style>
@@ -79,31 +91,29 @@
   .retro-font {
     font-family: 'DotGothic16', sans-serif;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 1px
   }
 
-  .battle-info {
-    @apply text-center text-2xl font-semibold text-gray-300 mt-6 mb-4;
-  }
-
+ 
   .card {
     background-color: #000; /* Black background for retro look */
     color: #00ff00; /* Green text for retro terminal look */
-    border: 3px solid #008080; /* Teal border */
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 255, 0, 0.7);
-    padding: 20px;
-    margin: 10px;
-    width: 250px;
+    border: 2px solid #008080; /* Teal border */
+    border-radius: 8px;
+    box-shadow: 0px 0px 8px rgba(0, 255, 0, 0.7);
+    padding: 15px;
+    margin: 8px;
+    width: 230px; /* Adjusted for smaller width */
   }
 
   .stat {
-    font-size: 14px;
-    margin: 5px 0;
+    font-size: 16px;
+    font-weight: bold; /* Bold only for stats */
+    margin: -16px 0;
   }
 
   .progress {
-    height: 15px;
+    height: 10px; /* Smaller health bar height */
     background-color: rgba(255, 0, 0, 0.3); /* Light red for health background */
   }
 
@@ -112,34 +122,56 @@
   }
 
   .health-label {
-    font-size: 14px;
+    font-size: 12px; /* Smaller health label */
     text-align: center;
     color: white;
   }
 
-  .dice-container {
-    @apply flex justify-center mt-6;
+   /* Health bar styling with heart icon */
+   .health-bar-container {
+    display: flex;
+    align-items: center;
+    margin-top: 16px;
   }
 
-  .result-message {
-    @apply text-lg font-bold text-center my-4 text-yellow-400;
+  .heart-icon {
+    width: 25px;
+    margin-right: 1px;
   }
 
-  .btn-primary {
-    @apply bg-teal-700 text-white hover:bg-teal-500;
+  .health-bar {
+    height: 15px;
+    width: 150px;
+    background-color: #555; /* Background of the bar */
+    border: 2px solid black;
+    display: flex;
+    border-radius: 10px;
   }
+
+  .health-fill {
+    transition: width 0.3s ease-in-out;
+    height: 100%;
+    border-radius: 10px;
+  }
+
+  .health-label {
+    font-size: 14px;
+    color: white;
+    
+  }
+
 </style>
 
 <main>
   {#if battleDetails && character && enemy}
-    <div class="battle-info retro-font">
-      <h2>Battle: {battleDetails.battleName}</h2>
-    </div>
+  <div class="text-center text-xl font-semibold text-gray-300 mt-4 mb-2 retro-font">
+    Battle: {battleDetails.battleName}
+  </div>
 
-    <div class="cards-container flex justify-center gap-6 my-8">
+    <div class="cards-container flex justify-center gap-4 my-4">
       <!-- Player Card -->
       <div class="card retro-font">
-        <h2 class="text-center text-xl mb-4">{character.name}</h2>
+        <h2 class="text-center text-lg mb-2">{character.name}</h2>
         <p class="stat">Class: {character.className}</p>
         <p class="stat">Level: {character.level}</p>
         <p class="stat">Attack: {character.attack}</p>
@@ -147,36 +179,45 @@
         <p class="stat">Mana: {character.mana}</p>
         <p class="stat">Stamina: {character.stamina}</p>
 
-        <!-- Player health bar -->
-        <div class="my-4">
-          <progress class="progress progress-health w-full" value={playerHealth} max="100"></progress>
-          <p class="health-label mt-2">Health: {playerHealth}%</p>
+         <!-- Player health bar -->
+         <div class="health-bar-container">
+          <img src={image} alt="Heart" class="heart-icon" />
+          <div class="health-bar">
+            <div class={`health-fill ${healthBarColor(playerHealth)}`} style="width: {playerHealth}%"></div>
+          </div>
         </div>
+        <p class="health-label">{playerHealth}%</p> <!-- Move this below the bar -->
       </div>
 
       <!-- Enemy Card -->
       <div class="card retro-font">
-        <h2 class="text-center text-xl mb-4">{enemy.name}</h2>
+        <h2 class="text-center text-lg mb-2">{enemy.name}</h2>
         <p class="stat">Type: {enemy.type}</p>
         <p class="stat">Attack: {enemy.attack}</p>
+        <p class="stat">Defense: {enemy.defense}</p>
+        <p class="stat">Speed: {enemy.speed}</p>
         <p class="stat">Defense: {enemy.defense}</p>
         <p class="stat">Reward: {enemy.experienceReward}</p>
 
         <!-- Enemy health bar -->
-        <div class="my-4">
-          <progress class="progress progress-health w-full" value={enemyHealth} max="100"></progress>
-          <p class="health-label mt-2">Health: {enemyHealth}%</p>
+        <div class="health-bar-container">
+          <img src={image} alt="Heart" class="heart-icon" />
+          <div class="health-bar">
+            <div class={`health-fill ${healthBarColor(playerHealth)}`} style="width: {playerHealth}%"></div>
+          </div>
         </div>
+        <p class="health-label">{playerHealth}%</p> <!-- Move this below the bar -->
       </div>
     </div>
 
     <!-- Dice Roll Result -->
-    <div class="result-message retro-font">
+    <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
       {resultMessage}
     </div>
+    
 
     <!-- Dice roll button -->
-    <div class="dice-container">
+    <div class="flex justify-center mt-4">
       <button class="btn btn-primary retro-font" on:click={rollDice} disabled={isBattleOver}>
         Roll Dice
       </button>
