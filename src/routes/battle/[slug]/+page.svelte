@@ -5,11 +5,12 @@
 
   import type { Battle } from '../../../types/battle';
   import type { Character } from '../../../types/character';
+  import type { Enemy } from '../../../types/enemy';
 
   // Battle and character information
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
-  let enemy: any = null;  // Enemy details, add proper typing if needed
+  let enemy: Enemy | null = null;  // Enemy details
   let slug = '';
   let playerHealth = 100;
   let enemyHealth = 100;
@@ -28,7 +29,9 @@
       const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('Battle Details:', battleDetails);
       battleDetails = battleResponse.data;
+      // Check if battle details contain EnemyIds
 
       // Fetch the player's character
       const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
@@ -36,15 +39,14 @@
       });
       character = characterResponse.data[0];
 
-      // Fetch enemy data (for now we use static data, replace with actual logic)
-      enemy = {
-        name: "Goblin",
-        type: "Beast",
-        health: 30,
-        attack: 10,
-        defense: 5,
-        experienceReward: 10,
-      };
+      // Fetch the enemy details based on the first enemy ID in the battle
+      if (battleDetails && battleDetails.enemyIds.length > 0) {
+        const enemyResponse = await axios.get(`https://localhost:5000/api/enemy/${battleDetails.enemyIds[0]}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        enemy = enemyResponse.data;
+      }
+
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -206,3 +208,4 @@
     </div>
   {/if}
 </main>
+

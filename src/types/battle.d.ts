@@ -3,4 +3,6 @@ export type Battle = {
     battleName: string;
     description: string;
     battleDate: string;
+    enemyIds: string[];
+    
   }
