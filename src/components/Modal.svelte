@@ -21,7 +21,7 @@
 </script>
 
 <!-- Use Tailwind classes for the modal -->
-<dialog bind:this={dialogElement} class="modal fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+<dialog bind:this={dialogElement} class="modal fixed inset-0 z-50 flex items-center justify-center">
   <div class="modal-box bg-base-100 p-6 shadow-lg rounded-lg relative w-full max-w-md mx-auto">
     <!-- X Close Icon at the top-right corner -->
     <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-600" on:click={handleClose}>
@@ -40,12 +40,11 @@
 <style>
   /* Style the backdrop to cover the entire screen with a fade */
   dialog::backdrop {
-    background-color: rgba(0, 0, 0, 0.75); /* Semi-transparent black background */
+     /* Semi-transparent black background */
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 40; /* Ensure it's behind the modal but in front of the rest of the content */
+
+   ; /* Ensure it's behind the modal but in front of the rest of the content */
   }
 </style>

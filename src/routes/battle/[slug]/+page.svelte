@@ -164,6 +164,10 @@
 
 <main>
   {#if battleDetails && character && enemy}
+  <!-- Battle details and character info -->
+   <div class= battle>
+    
+   </div>
   <div class="text-center text-xl font-semibold text-gray-300 mt-4 mb-2 retro-font">
     Battle: {battleDetails.battleName}
   </div>
@@ -203,10 +207,10 @@
         <div class="health-bar-container">
           <img src={image} alt="Heart" class="heart-icon" />
           <div class="health-bar">
-            <div class={`health-fill ${healthBarColor(playerHealth)}`} style="width: {playerHealth}%"></div>
+            <div class={`health-fill ${healthBarColor(enemyHealth)}`} style="width: {enemyHealth}%"></div>
           </div>
         </div>
-        <p class="health-label">{playerHealth}%</p> <!-- Move this below the bar -->
+        <p class="health-label">{enemyHealth}%</p> <!-- Move this below the bar -->
       </div>
     </div>
 

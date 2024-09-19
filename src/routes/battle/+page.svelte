@@ -42,18 +42,16 @@
   {/if}
 
   {#if battles.length === 0}
-    <p class="text-lg text-gray-400 retro-font">No battles available at the moment.</p>
+    <p class="text-lg retro-font">No battles available at the moment.</p>
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {#each battles as battle}
-        <div class="card bg-gray-900 border-2 border-teal-400 text-green-500 shadow-lg hover:shadow-xl transition-shadow duration-300 retro-card p-6 flex flex-col items-center text-center">
+        <div class="card border-2 border-teal-400 text-green-500 shadow-lg hover:shadow-xl transition-shadow duration-300 retro-card p-6 flex flex-col items-center text-center">
           <!-- Battle name with MedievalSharp font and bold style -->
           <h3 class="battle-name text-xl font-bold mb-2 neon-glow">{battle.battleName ?? 'Unknown Battle'}</h3>
           <!-- Battle description with MedievalSharp font -->
-          <p class="retro-font text-gray-300 mb-4">{battle.description ?? 'No description available.'}</p>
-          <p class="text-sm text-gray-400 mb-4 retro-font">
-            <!-- Date: {battle.battleDate ? new Date(battle.battleDate).toLocaleDateString() : 'Unknown Date'} -->
-          </p>
+          <p class="retro-font mb-4">{battle.description ?? 'No description available.'}</p>
+          <p class="text-sm mb-4 retro-font"></p>
           <button
             on:click={() => enterBattle(battle.id)}
             class="btn btn-primary w-full retro-font hover:scale-105 transform transition-transform duration-300">
@@ -116,6 +114,19 @@
   .btn-primary:hover {
     background-color: #00ff00;
     color: #000;
+  }
+
+  
+  .battle-list {
+    background-color: #000;
+    width: 100%;
+  }
+  
+  html, body {
+    
+    height: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   /* Ensure layout works on smaller devices */
