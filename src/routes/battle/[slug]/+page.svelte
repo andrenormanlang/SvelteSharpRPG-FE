@@ -1,37 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { tweened } from 'svelte/motion';
-  import { Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, Mesh } from 'three';
   import axios from 'axios';
+  import { page } from '$app/stores';  // To get URL params
 
-  // Types
   import type { Battle } from '../../../types/battle';
   import type { Character } from '../../../types/character';
 
+  // Battle and character information
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
-  let playerRoll = 0;
-  let enemyRoll = 0;
-  let resultMessage = '';
-  let isBattleOver = false;
+  let enemy: any = null;  // Enemy details, add proper typing if needed
   let slug = '';
   let playerHealth = 100;
   let enemyHealth = 100;
-  let currentRound = 1;
-  let maxRounds = 3;
+  let isBattleOver = false;
+  let resultMessage = '';
 
-  // Dice settings
-  let diceNum = 1;
-  let dieType = 6;  // Default to a 6-sided die for now
-
-  // Three.js variables for player and enemy dice
-  let scene: Scene;
-  let camera: PerspectiveCamera;
-  let renderer: WebGLRenderer;
-  let playerDice: Mesh;
-  let enemyDice: Mesh;
-  let diceRotation = tweened(0, { duration: 500 });  // Animation timing
-  let enemyDiceRotation = tweened(0, { duration: 500 });
+  $: slug = $page.params.slug;  // Get the battle ID from the URL
 
   // Fetch battle and character data
   onMount(async () => {
@@ -39,71 +24,38 @@
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
 
+      // Fetch the battle details using slug from URL
       const battleResponse = await axios.get(`https://localhost:5000/api/battle/${slug}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       battleDetails = battleResponse.data;
 
+      // Fetch the player's character
       const characterResponse = await axios.get(`https://localhost:5000/api/character/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       character = characterResponse.data[0];
 
-      // Initialize Three.js scene
-      initThreeScene();
+      // Fetch enemy data (for now we use static data, replace with actual logic)
+      enemy = {
+        name: "Goblin",
+        type: "Beast",
+        health: 30,
+        attack: 10,
+        defense: 5,
+        experienceReward: 10,
+      };
+
     } catch (error) {
-      console.error('Error fetching battle or character details:', error);
+      console.error('Error fetching data:', error);
     }
   });
 
-  // Initialize Three.js scene and dice meshes
-  function initThreeScene() {
-    scene = new Scene();
-    camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-    renderer = new WebGLRenderer({ antialias: true });
-    renderer.setSize(200, 200);
-
-    const diceContainer = document.querySelector(".dice-container");
-    if (diceContainer) {
-      diceContainer.appendChild(renderer.domElement);
-    }
-
-    // Create player dice
-    const playerGeometry = new BoxGeometry();
-    const playerMaterial = new MeshBasicMaterial({ color: 0x00ff00 });
-    playerDice = new Mesh(playerGeometry, playerMaterial);
-    scene.add(playerDice);
-
-    // Create enemy dice
-    const enemyGeometry = new BoxGeometry();
-    const enemyMaterial = new MeshBasicMaterial({ color: 0xff0000 });
-    enemyDice = new Mesh(enemyGeometry, enemyMaterial);
-    enemyDice.position.x = 2;
-    scene.add(enemyDice);
-
-    // Start animation loop
-    animate();
-  }
-
-  // Animation loop for rotating dice
-  function animate() {
-    requestAnimationFrame(animate);
-
-    playerDice.rotation.x += 0.02;
-    playerDice.rotation.y += 0.02;
-    enemyDice.rotation.x += 0.02;
-    enemyDice.rotation.y += 0.02;
-
-    renderer.render(scene, camera);
-  }
-
-  // Roll dice for player and enemy
+  // Function to handle dice rolling and health adjustments
   function rollDice() {
-    playerRoll = Math.floor(Math.random() * dieType) + 1;
-    enemyRoll = Math.floor(Math.random() * 6) + 1;
+    const playerRoll = Math.floor(Math.random() * 6) + 1;
+    const enemyRoll = Math.floor(Math.random() * 6) + 1;
 
-    // Update health and result message
     if (playerRoll > enemyRoll) {
       enemyHealth -= playerRoll;
       resultMessage = `You won this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
@@ -112,7 +64,6 @@
       resultMessage = `You lost this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
     }
 
-    // End game if any player's health reaches 0
     if (playerHealth <= 0) {
       resultMessage = 'You lost the battle!';
       isBattleOver = true;
@@ -120,81 +71,138 @@
       resultMessage = 'You won the battle!';
       isBattleOver = true;
     }
-
-    // Simulate dice roll animation using tweened values
-    diceRotation.set(Math.random() * Math.PI * 2);  
-    enemyDiceRotation.set(Math.random() * Math.PI * 2);
-  }
-
-  // Dice type adjustments
-  function upType() {
-    dieType = dieType === 20 ? 6 : dieType + 2;
-  }
-
-  function downType() {
-    dieType = dieType === 6 ? 20 : dieType - 2;
   }
 </script>
 
 <style>
-  .dice-roll {
-    text-align: center;
-    margin: 20px;
+  .cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
   }
 
-  .health-bar {
-    width: 100%;
-    background-color: #ddd;
-    border-radius: 10px;
+  .card {
+    border-radius: 8px;
+    padding: 20px;
+    margin: 10px;
+    width: 250px;
+    background-color: #333;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+
+  .card-title {
+    font-size: 20px;
     margin-bottom: 10px;
   }
 
-  .health-fill {
-    height: 20px;
-    background-color: #4caf50;
+  .stat {
+    font-size: 14px;
+    margin: 5px 0;
+  }
+
+  .health-bar-container {
+    height: 15px;
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .health-bar {
+    height: 100%;
     transition: width 0.5s ease;
   }
 
-  .enemy-health-fill {
-    height: 20px;
-    background-color: #f44336;
-    transition: width 0.5s ease;
+  .player-health {
+    background-color: #4caf50;
+  }
+
+  .enemy-health {
+    background-color: #ff4d4d;
+  }
+
+  .button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .button:hover {
+    background-color: #0056b3;
   }
 
   .dice-container {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
+    justify-content: center;
     margin-top: 20px;
   }
 
-  button {
+  .result-message {
+    font-size: 16px;
     margin: 10px;
-    padding: 10px;
-    font-size: 18px;
-    border-radius: 5px;
+    text-align: center;
+  }
+
+  .battle-info {
+    text-align: center;
+    margin-top: 20px;
   }
 </style>
 
 <main>
-  <div>
-    <h2>{battleDetails?.battleName}</h2>
-    <div class="health-bar">
-      <div class="health-fill" style="width: {playerHealth}%"></div>
+  {#if battleDetails && character && enemy}
+    <div class="battle-info">
+      <h2>Battle: {battleDetails.battleName}</h2>
     </div>
-    <div class="health-bar">
-      <div class="enemy-health-fill" style="width: {enemyHealth}%"></div>
-    </div>
-    <h4>{resultMessage}</h4>
 
-    {#if !isBattleOver}
-      <div class="dice-roll">
-        <h4>Roll {diceNum} D{dieType}</h4>
-        <button on:click={upType}>Increase Dice Type</button>
-        <button on:click={rollDice}>Roll Dice</button>
+    <div class="cards-container">
+      <!-- Player Card -->
+      <div class="card">
+        <div class="card-title">{character.name} (Level: {character.level})</div>
+        <div class="stat">Class: {character.className}</div>
+        <div class="stat">Attack: {character.attack}</div>
+        <div class="stat">Defense: {character.defense}</div>
+        <div class="stat">Mana: {character.mana}</div>
+        <div class="stat">Stamina: {character.stamina}</div>
+
+        <!-- Player health bar -->
+        <div class="health-bar-container">
+          <div class="health-bar player-health" style="width: {playerHealth}%"></div>
+        </div>
       </div>
-    {/if}
-  </div>
 
-  <div class="dice-container"></div>
+      <!-- Enemy Card -->
+      <div class="card">
+        <div class="card-title">{enemy.name} ({enemy.type})</div>
+        <div class="stat">Attack: {enemy.attack}</div>
+        <div class="stat">Defense: {enemy.defense}</div>
+        <div class="stat">Experience Reward: {enemy.experienceReward}</div>
+
+        <!-- Enemy health bar -->
+        <div class="health-bar-container">
+          <div class="health-bar enemy-health" style="width: {enemyHealth}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dice Roll Result -->
+    <div class="result-message">
+      {resultMessage}
+    </div>
+
+    <!-- Dice roll button -->
+    <div class="dice-container">
+      <button class="button" on:click={rollDice} disabled={isBattleOver}>
+        Roll Dice
+      </button>
+    </div>
+  {/if}
 </main>

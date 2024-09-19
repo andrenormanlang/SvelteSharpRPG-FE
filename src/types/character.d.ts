@@ -2,6 +2,7 @@ export interface Character {
     id: string;
     name: string;
     classId: string;
+    className: string;
     health: number;
     attack: number;
     defense: number;
