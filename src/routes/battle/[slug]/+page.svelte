@@ -97,7 +97,7 @@
 
 
   // Roll all dice function
- const rollAll = () => {
+  const rollAll = () => {
   if (dice.length > 0) {
     playDiceSound();
 
@@ -111,16 +111,15 @@
       const playerRoll = dice.reduce((sum, die) => sum + die.currentValue, 0);
       const enemyRoll = diceEnemy.reduce((sum, die) => sum + die.currentValue, 0);
 
-      // Display the total rolls
-      resultMessage = `You rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
-
-      // Check who won the round and update the result message
-      if (playerRoll > enemyRoll) {
+      // Only display the result outcome without repeating the roll values
+      if (playerRoll === enemyRoll) {
+        resultMessage = `It's a tie!`; // No health deduction
+      } else if (playerRoll > enemyRoll) {
         enemyHealth -= playerRoll;
-        resultMessage += ` You won this round!`; // Update result if player wins
+        resultMessage = `You won this round!`; // Player wins
       } else {
         playerHealth -= enemyRoll;
-        resultMessage += ` You lost this round!`; // Update result if player loses
+        resultMessage = `You lost this round!`; // Enemy wins
       }
 
       // Check if the battle is over based on the health conditions
@@ -134,6 +133,7 @@
     }, 1000); // Delay the result calculation to match the dice roll animation duration
   }
 };
+
 
 
   // Fetch battle and character data
@@ -245,13 +245,33 @@
   margin-left: 0.5rem;
   background-color: var(--panel-color);
 }
+.dice-container {
+  display: flex;
+  align-items: flex-start; /* Aligns dice and result message vertically */
+  justify-content: center;
+  gap: 2rem; /* Adds space between player and enemy sections */
+}
 
-  .dice-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: center;
-  }
+hr.divider {
+  width: 2px;
+  height: 100px;
+  background-color: white;
+  border: none;
+  margin: 0 20px; /* Adds space between the player and enemy sections */
+}
+
+.dice-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centers the dice and result message horizontally */
+}
+
+.result-message {
+  margin-top: 10px; /* Space between the die and the result message */
+  text-align: center; /* Ensures the text is centered */
+  font-size: 1.2rem;
+  color: yellow;
+}
 
 .die:hover .die-remove {
   display: grid;
@@ -376,18 +396,31 @@
       </div>
     
       <!-- Player Dice -->
-      <div class="dice-container">
-        {#each dice as die (die.id)}
+      <!-- Player and Enemy Dice with centered results -->
+  <div class="dice-container">
+    <div class="dice-wrapper">
+      {#each dice as die (die.id)}
         <div class="die shadow">
-          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="die" />
+          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
           <p class="die-value">{die.currentValue}</p>
           <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
             <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
           </button>
         </div>
-        {/each}
-        <span class="separator">||</span>
-        {#each diceEnemy as die (die.id)}
+      {/each}
+      <!-- Conditionally display Player Roll Result only if any die has been rolled -->
+      {#if dice.reduce((sum, die) => sum + die.currentValue, 0) > 0}
+        <div class="result-message text-yellow-400 retro-font">
+          You rolled {dice.reduce((sum, die) => sum + die.currentValue, 0)}.
+        </div>
+      {/if}
+    </div>
+
+    <!-- <span class="separator">||</span> -->
+    <hr class="divider" />
+
+    <div class="dice-wrapper">
+      {#each diceEnemy as die (die.id)}
         <div class="die shadow">
           <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
           <p class="die-value">{die.currentValue}</p>
@@ -395,8 +428,15 @@
             <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
           </button>
         </div>
-        {/each}
-      </div>
+      {/each}
+      <!-- Conditionally display Enemy Roll Result only if any die has been rolled -->
+      {#if diceEnemy.reduce((sum, die) => sum + die.currentValue, 0) > 0}
+        <div class="result-message text-yellow-400 retro-font">
+          Enemy rolled {diceEnemy.reduce((sum, die) => sum + die.currentValue, 0)}.
+        </div>
+      {/if}
+    </div>
+  </div>
     
       <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
         {resultMessage}
