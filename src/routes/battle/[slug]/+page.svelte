@@ -11,6 +11,8 @@
   import type { Character } from '../../../types/character';
   import type { Enemy } from '../../../types/enemy';
   import UtilPanel from '../../../components/UtilPanel.svelte';
+
+  import Icon from '@iconify/svelte';
   
 
   let battleDetails: Battle | null = null;
@@ -356,7 +358,7 @@
           <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="die" />
           <p class="die-value">{die.currentValue}</p>
           <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
-            <img src="/icons/remove-icon.svg" alt="Remove Die" width="20" height="20" />
+            <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
           </button>
         </div>
         {/each}
@@ -369,7 +371,8 @@
           <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
           <p class="die-value">{die.currentValue}</p>
           <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
-            <img src="/icons/remove-icon.svg" alt="Remove Die" width="20" height="20" />
+            <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
+           
           </button>
         </div>
         {/each}
