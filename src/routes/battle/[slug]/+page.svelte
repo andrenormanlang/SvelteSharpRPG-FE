@@ -13,6 +13,8 @@
   import UtilPanel from '../../../components/UtilPanel.svelte';
 
   import Icon from '@iconify/svelte';
+  import { fade, fly } from 'svelte/transition';
+  import { spring } from 'svelte/motion';
   
 
   let battleDetails: Battle | null = null;
@@ -37,7 +39,9 @@
     type: number;
     currentValue: number;
     isRolling: boolean;
+    isHovered?: boolean; // Add this line
     roll: (playSound: boolean) => void;
+    
   }
 
   let dice: Die[] = []; // Player dice
@@ -86,14 +90,32 @@
 };
 
 
- // Remove both player and enemy dice based on the id
- const removeBothDice = (dieId: number) => {
-  // Remove the player's die with the matching id
-  dice = dice.filter(d => d.id !== dieId);
+const removeBothDice = (dieId: number) => {
+    const dieToRemove = dice.find(d => d.id === dieId);
+    if (dieToRemove) {
+      const dieElement = document.getElementById(`die-${dieId}`);
+      if (dieElement) {
+        dieElement.style.transform = 'scale(0.8) rotate(10deg)';
+        dieElement.style.opacity = '0.5';
+      }
+    }
+    setTimeout(() => {
+      dice = dice.filter(d => d.id !== dieId);
+      diceEnemy = diceEnemy.filter(d => d.id !== dieId);
+    }, 300);
+  };
 
-  // Remove the enemy's die with the same id
-  diceEnemy = diceEnemy.filter(d => d.id !== dieId);
-};
+  let scaleSpring = spring({ stiffness: 0.1, damping: 0.25 });
+
+function handleMouseEnter(dieId: number) {
+  scaleSpring.set({ stiffness: 1.1, damping: 0.25 });
+  dice = dice.map(d => d.id === dieId ? {...d, isHovered: true} : d);
+}
+
+function handleMouseLeave(dieId: number) {
+  scaleSpring.set({ stiffness: 1, damping: 0.25 });
+  dice = dice.map(d => d.id === dieId ? {...d, isHovered: false} : d);
+}
 
 
   // Roll all dice function
@@ -112,6 +134,11 @@
       const enemyRoll = diceEnemy.reduce((sum, die) => sum + die.currentValue, 0);
 
       // Only display the result outcome without repeating the roll values
+      if (dice.length === 0 || diceEnemy.length === 0) {
+        resultMessage = ''; // Clear the result message if no dice are left
+        return; // Exit early if no dice
+      }
+
       if (playerRoll === enemyRoll) {
         resultMessage = `It's a tie!`; // No health deduction
       } else if (playerRoll > enemyRoll) {
@@ -133,7 +160,6 @@
     }, 1000); // Delay the result calculation to match the dice roll animation duration
   }
 };
-
 
 
   // Fetch battle and character data
@@ -339,6 +365,19 @@ hr.divider {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+.die {
+    transition: all 0.3s ease;
+  }
+
+  .die-remove {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+  }
+
+  .die:hover .die-remove {
+    opacity: 1;
+  }
 </style>
 
 <main>
@@ -400,14 +439,24 @@ hr.divider {
   <div class="dice-container">
     <div class="dice-wrapper">
       {#each dice as die (die.id)}
-        <div class="die shadow">
-          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
-          <p class="die-value">{die.currentValue}</p>
-          <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
-            <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
-          </button>
-        </div>
-      {/each}
+      <div class="die shadow" 
+           id="die-{die.id}"
+           role="button"
+           tabindex="0"
+           on:mouseenter={() => handleMouseEnter(die.id)}
+           on:mouseleave={() => handleMouseLeave(die.id)}
+           in:fly="{{ y: 50, duration: 300 }}"
+           out:fade="{{ duration: 300 }}"
+           style="transform: scale({$scaleSpring})">
+        <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
+        <p class="die-value">{die.currentValue}</p>
+        <button class="die-remove shadow non-selectable" 
+                id="remove-{die.id}"
+                on:click={() => removeBothDice(die.id)}>
+          <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
+        </button>
+      </div>
+    {/each}
       <!-- Conditionally display Player Roll Result only if any die has been rolled -->
       {#if dice.reduce((sum, die) => sum + die.currentValue, 0) > 0}
         <div class="result-message text-yellow-400 retro-font">
@@ -420,15 +469,25 @@ hr.divider {
     <hr class="divider" />
 
     <div class="dice-wrapper">
-      {#each diceEnemy as die (die.id)}
-        <div class="die shadow">
-          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
-          <p class="die-value">{die.currentValue}</p>
-          <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
-            <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
-          </button>
-        </div>
-      {/each}
+      {#each dice as die (die.id)}
+      <div class="die shadow" 
+           id="die-{die.id}"
+           role="button"
+           tabindex="0"
+           on:mouseenter={() => handleMouseEnter(die.id)}
+           on:mouseleave={() => handleMouseLeave(die.id)}
+           in:fly="{{ y: 50, duration: 300 }}"
+           out:fade="{{ duration: 300 }}"
+           style="transform: scale({$scaleSpring})">
+        <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
+        <p class="die-value">{die.currentValue}</p>
+        <button class="die-remove shadow non-selectable" 
+        style="opacity: {die.isHovered ? 1 : 0}"
+        on:click={() => removeBothDice(die.id)}>
+  <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
+</button>
+      </div>
+    {/each}
       <!-- Conditionally display Enemy Roll Result only if any die has been rolled -->
       {#if diceEnemy.reduce((sum, die) => sum + die.currentValue, 0) > 0}
         <div class="result-message text-yellow-400 retro-font">
@@ -438,9 +497,11 @@ hr.divider {
     </div>
   </div>
     
-      <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
-        {resultMessage}
-      </div>
+  {#if dice.length > 0 && diceEnemy.length > 0}
+  <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
+    {resultMessage}
+  </div>
+{/if}
     </div>
   {/if}
 </main>
