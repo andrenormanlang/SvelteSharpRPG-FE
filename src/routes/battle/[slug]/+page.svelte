@@ -3,7 +3,7 @@
   import axios from 'axios';
   import { page } from '$app/stores';
   import { playDiceSound, playDieSound } from '../../../stores/audioStore';
-  import { getDieTemplate, rollDie } from '$lib/utils/rollDie';
+  import { rollDie } from '$lib/utils/rollDie';
   import { muteAudio, rollOnTemplate } from '../../../stores/preferenceStore';
   import { browser } from '$app/environment';
 
@@ -11,11 +11,9 @@
   import type { Character } from '../../../types/character';
   import type { Enemy } from '../../../types/enemy';
   import UtilPanel from '../../../components/UtilPanel.svelte';
-
   import Icon from '@iconify/svelte';
   import { fade, fly } from 'svelte/transition';
   import { spring } from 'svelte/motion';
-  
 
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
@@ -25,127 +23,189 @@
   let enemyHealth = 100;
   let isBattleOver = false;
   let resultMessage = '';
+  let playerTurn = false;
+
+  interface Die {
+  id: number;
+  type: number;
+  currentValue: number;
+  isRolling: boolean;
+  isHovered?: boolean;
+  roll: (playSound: boolean) => void;
+}
+
+interface Combatant {
+  name: string;
+  attack: number;
+  defense: number;
+  speed: number;
+  health: number;
+}
+
+
 
   let currentDieId = 0;
+  let dice: Die[] = []; // Player dice
+let diceEnemy: Die[] = []; // Enemy dice
+  let dieTypes: number[] = [4, 6, 8, 10, 12, 20];
+
   let mute = true;
   let autoRoll = false;
+  let initiativeRolled = false;
 
   rollOnTemplate.subscribe(x => autoRoll = x);
   muteAudio.subscribe(x => mute = x);
 
-  // Define Die interface
-  interface Die {
-    id: number;
-    type: number;
-    currentValue: number;
-    isRolling: boolean;
-    isHovered?: boolean; // Add this line
-    roll: (playSound: boolean) => void;
-    
+  // D&D Initiative: Determine who goes first
+  const rollInitiative = () => {
+  // Ensure that character and enemy are not null before proceeding
+  if (!character || !enemy) {
+    resultMessage = "Character or enemy data missing, cannot roll initiative!";
+    return;
   }
 
-  let dice: Die[] = []; // Player dice
-  let diceEnemy: Die[] = []; // Enemy dice
-  let dieTypes: number[] = [4, 6, 8, 10, 12, 20];
-  let totalValue: number = 0;
+  // Roll initiative for both player and enemy
+  const playerInitiative = rollDie(20) + character.speed;
+  const enemyInitiative = rollDie(20) + enemy.speed;
 
-  // Add and remove dice functions
-  const addDie = (dieType: number) => {
-  const newDieId = currentDieId++; // Generate a unique ID for both player and enemy dice
+  // Determine who goes first based on initiative rolls
+  if (playerInitiative >= enemyInitiative) {
+    resultMessage = `You go first with initiative: ${playerInitiative}`;
+    playerTurn = true;
+  } else {
+    resultMessage = `Enemy goes first with initiative: ${enemyInitiative}`;
+    playerTurn = false;
+  }
 
-  // Add player die
-  dice = [
-    ...dice,
-    {
-      id: newDieId, // Same ID for both
-      type: dieType,
-      currentValue: 0,
-      isRolling: false,
-      roll: (playSound: boolean) => {
-        if (browser && playSound) playDieSound();
-        dice = dice.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
-        setTimeout(() => {
-          dice = dice.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
-        }, 800);
+  // Mark initiative as rolled
+  initiativeRolled = true;
+
+  // Provide visual or audio feedback for initiative roll (optional)
+  if (browser) {
+    playDiceSound(); // Optional: Add a sound effect for initiative roll
+  }
+
+  console.log(`Player Initiative: ${playerInitiative}, Enemy Initiative: ${enemyInitiative}`);
+};
+
+  // D&D Attack Roll (D20 + Attack vs Defense)
+  const attackRoll = (attacker : Combatant, defender : Combatant) => {
+    const attackRollValue = rollDie(20) + attacker.attack;
+    if (attackRollValue >= defender.defense) {
+      if (rollDie(20) === 20) {
+        resultMessage += ` ${attacker.name} lands a critical hit!`;
+        return 'critical';
+      } else {
+        resultMessage += ` ${attacker.name} hits ${defender.name}.`;
+        return 'hit';
       }
+    } else {
+      resultMessage += ` ${attacker.name} misses ${defender.name}.`;
+      return 'miss';
     }
-  ];
+  };
 
-  // Add corresponding enemy die
-  diceEnemy = [
-  ...diceEnemy,
-  {
-    id: newDieId, // Same ID for both
-    type: dieType,
-    currentValue: 0,
-    isRolling: false,
-    roll: (playSound: boolean) => {
-      diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
-      setTimeout(() => {
-        diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
-      }, 800);
+  // Damage Roll
+  const calculateDamage = (attacker : Combatant, defender : Combatant, critical = false) => {
+    let damage = rollDie(8) + attacker.attack;
+    if (critical) {
+      damage += rollDie(8);
     }
+    defender.health -= damage;
+
+    if (defender.health <= 0) {
+      defender.health = 0;
+      resultMessage += ` ${defender.name} has been defeated!`;
+      isBattleOver = true;
+    }
+  };
+
+  const handlePlayerTurn = () => {
+  if (isBattleOver || !character || !enemy) return;
+
+  const outcome = attackRoll(character as Combatant, enemy as Combatant);
+  if (outcome === 'hit' || outcome === 'critical') {
+    calculateDamage(character as Combatant, enemy as Combatant, outcome === 'critical');
   }
-];
+
+  if (!isBattleOver) handleEnemyTurn();
+};
+
+  // Handle Enemy's Turn
+  const handleEnemyTurn = () => {
+  if (isBattleOver || !character || !enemy) return; // Ensure character and enemy are not null
+  const outcome = attackRoll(enemy as Combatant, character as Combatant); // Cast to Combatant after the null check
+  if (outcome === 'hit' || outcome === 'critical') {
+    calculateDamage(enemy as Combatant, character as Combatant, outcome === 'critical');
+  }
+  if (!isBattleOver) handlePlayerTurn();
 };
 
 
-const removeBothDice = (dieId: number) => {
-    const dieToRemove = dice.find(d => d.id === dieId);
-    if (dieToRemove) {
-      const dieElement = document.getElementById(`die-${dieId}`);
-      if (dieElement) {
-        dieElement.style.transform = 'scale(0.8) rotate(10deg)';
-        dieElement.style.opacity = '0.5';
-      }
-    }
-    setTimeout(() => {
-      dice = dice.filter(d => d.id !== dieId);
-      diceEnemy = diceEnemy.filter(d => d.id !== dieId);
-    }, 300);
+  // Start Battle after initiative roll
+  const startBattle = () => {
+    rollInitiative();
+    if (playerTurn) handlePlayerTurn();
+    else handleEnemyTurn();
   };
 
-  let scaleSpring = spring({ stiffness: 0.1, damping: 0.25 });
+  // Add a die for both player and enemy
+  const addDie = (dieType: number) => {
+    const newDieId = currentDieId++;
+    dice = [
+      ...dice,
+      {
+        id: newDieId,
+        type: dieType,
+        currentValue: 0,
+        isRolling: false,
+        roll: (playSound: boolean) => {
+          if (browser && playSound) playDieSound();
+          dice = dice.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
+          setTimeout(() => {
+            dice = dice.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
+          }, 800);
+        }
+      }
+    ];
 
-function handleMouseEnter(dieId: number) {
-  scaleSpring.set({ stiffness: 1.1, damping: 0.25 });
-  dice = dice.map(d => d.id === dieId ? {...d, isHovered: true} : d);
-}
+    diceEnemy = [
+      ...diceEnemy,
+      {
+        id: newDieId,
+        type: dieType,
+        currentValue: 0,
+        isRolling: false,
+        roll: (playSound: boolean) => {
+          diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
+          setTimeout(() => {
+            diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
+          }, 800);
+        }
+      }
+    ];
+  };
 
-function handleMouseLeave(dieId: number) {
-  scaleSpring.set({ stiffness: 1, damping: 0.25 });
-  dice = dice.map(d => d.id === dieId ? {...d, isHovered: false} : d);
-}
-
-
-  // Roll all dice function
+  // Roll All Dice Function (For visual rolling and tie-breaking)
   const rollAll = () => {
-  if (dice.length > 0 && diceEnemy.length > 0) {
     playDiceSound();
-
-    // Set both player and enemy dice rolling
     dice.forEach((die) => die.roll(true));
     diceEnemy.forEach((die) => die.roll(false));
 
-    // Use a timeout to ensure the results are calculated after the dice finish rolling
     setTimeout(() => {
-      // Calculate the player's dice roll
       const playerRoll = dice.reduce((sum, die) => sum + die.currentValue, 0);
-      // Calculate the enemy's dice roll
       const enemyRoll = diceEnemy.reduce((sum, die) => sum + die.currentValue, 0);
 
-      // Only display the result outcome if both player and enemy dice exist
       if (playerRoll === enemyRoll) {
-        resultMessage = `It's a tie!`; // No health deduction
+        resultMessage = "It's a tie!";
       } else if (playerRoll > enemyRoll) {
         enemyHealth -= playerRoll;
-        resultMessage = `You won this round!`; // Player wins
+        resultMessage = `You rolled ${playerRoll} and won the round!`;
       } else {
         playerHealth -= enemyRoll;
-        resultMessage = `You lost this round!`; // Enemy wins
+        resultMessage = `You lost the round! Enemy rolled ${enemyRoll}.`;
       }
 
-      // Check if the battle is over based on the health conditions
       if (playerHealth <= 0) {
         resultMessage = 'You lost the battle!';
         isBattleOver = true;
@@ -153,13 +213,10 @@ function handleMouseLeave(dieId: number) {
         resultMessage = 'You won the battle!';
         isBattleOver = true;
       }
-    }, 1000); // Delay the result calculation to match the dice roll animation duration
-  }
-};
+    }, 1000);
+  };
 
-
-
-  // Fetch battle and character data
+  // Fetch Battle Details
   $: slug = $page.params.slug;
   onMount(async () => {
     try {
@@ -196,44 +253,78 @@ function handleMouseLeave(dieId: number) {
       return 'bg-red-500';
     }
   }
+
+  const removeBothDice = (dieId: number) => {
+  const dieToRemove = dice.find(d => d.id === dieId);
+  if (dieToRemove) {
+    const dieElement = document.getElementById(`die-${dieId}`);
+    if (dieElement) {
+      dieElement.style.transform = 'scale(0.8) rotate(10deg)';
+      dieElement.style.opacity = '0.5';
+    }
+  }
+  setTimeout(() => {
+    dice = dice.filter(d => d.id !== dieId);
+    diceEnemy = diceEnemy.filter(d => d.id !== dieId);
+  }, 300);
+};
+let scaleSpring = spring({ stiffness: 0.1, damping: 0.25 });
+
+function handleMouseEnter(dieId: number) {
+  scaleSpring.set({ stiffness: 1.1, damping: 0.25 });
+  dice = dice.map(d => d.id === dieId ? { ...d, isHovered: true } : d);
+}
+
+function handleMouseLeave(dieId: number) {
+  scaleSpring.set({ stiffness: 1, damping: 0.25 });
+  dice = dice.map(d => d.id === dieId ? { ...d, isHovered: false } : d);
+}
+
 </script>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
-
-  
-  
   .retro-font { font-family: 'DotGothic16', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
   .card { background-color: #000; color: #00ff00; border: 2px solid #008080; border-radius: 8px; padding: 15px; margin: 8px; width: 230px; }
   .health-bar-container { display: flex; align-items: center; margin-top: 16px; }
   .heart-icon { width: 25px; margin-right: 1px; }
   .health-bar { height: 15px; width: 150px; background-color: #555; border: 2px solid black; display: flex; border-radius: 10px; }
   .health-fill { transition: width 0.3s ease-in-out; height: 100%; border-radius: 10px; }
-  .health-label { font-size: 14px; color: white; }
-  .dice-section { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-  .dice-buttons { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
-  .dice { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .die { display: flex; flex-direction: column; align-items: center; }
+  .health-label { font-size: 14px; color: white;}
 
-  @keyframes dieSpawn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+
+.dice-section {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dice-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.dice {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.die {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes dieSpawn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 @keyframes spin {
-  33% {
-    transform: rotateY(360deg) rotateZ(360deg);
-  }
-  66% {
-    transform: rotateY(360deg) rotateZ(-360deg);
-  }
-  100% {
-    transform: rotateY(360deg) rotateZ(360deg);
-  }
+  33% { transform: rotateY(360deg) rotateZ(360deg); }
+  66% { transform: rotateY(360deg) rotateZ(-360deg); }
+  100% { transform: rotateY(360deg) rotateZ(360deg); }
 }
 
 .die-icon-anim {
@@ -249,43 +340,43 @@ function handleMouseLeave(dieId: number) {
 }
 
 .dice-header {
-    font-size: 1.5rem;
-    color: #00ff00;
-    text-align: center;
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-weight: bold;
-    text-shadow: 0 0 5px #00ff00;
-  }
+  font-size: 1.5rem;
+  color: #00ff00;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ff00;
+}
 
 .die-value {
   z-index: 1;
-  background-color: white; /* Change background to white for better contrast */
-  color: black; /* Change text color to black for better contrast */
-  font-weight: bold; /* Make the text bold for easier readability */
-  padding: 0.5rem; /* Add padding to give space around the text */
-  border-radius: 0.5rem; /* Rounded corners for a nicer look */
-  font-size: 2rem; /* Larger font size for better readability */
+  background-color: white;
+  color: black;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 2rem;
 }
 
 .die {
-  height: 12rem; /* Increased height */
-  width: 12rem; /* Increased width */
+  height: 12rem;
+  width: 12rem;
   position: relative;
   display: grid;
   place-items: center;
   padding: 1rem;
   border-radius: 0.3rem;
-  margin-right: 0.5rem; /* Adjust margins for proper spacing */
+  margin-right: 0.5rem;
   margin-left: 0.5rem;
   background-color: var(--panel-color);
 }
 .dice-container {
   display: flex;
-  align-items: flex-start; /* Aligns dice and result message vertically */
+  align-items: flex-start;
   justify-content: center;
-  gap: 2rem; /* Adds space between player and enemy sections */
+  gap: 2rem;
 }
 
 hr.divider {
@@ -293,19 +384,20 @@ hr.divider {
   height: 100px;
   background-color: white;
   border: none;
-  margin: 0 20px; /* Adds space between the player and enemy sections */
+  margin: 0 20px;
 }
 
 .dice-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-  }
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
 .result-message {
-  margin-top: 10px; /* Space between the die and the result message */
-  text-align: center; /* Ensures the text is centered */
+  margin-top: 10px;
+  text-align: center;
   font-size: 1.2rem;
   color: yellow;
 }
@@ -351,56 +443,22 @@ hr.divider {
 }
 
 .separator {
-  font-size: 2rem; /* Larger size for better visibility */
-  color: white; /* White color to contrast against the background */
+  font-size: 2rem;
+  color: white;
 }
 
 .die-separator {
-    display: inline-block;
-    font-size: 2rem;
-    color: #00ff00;
-    margin: 0 0.5rem;
-    align-self: center;
-  }
-
-/* General layout */
-.dice-section {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: inline-block;
+  font-size: 2rem;
+  color: #00ff00;
+  margin: 0 0.5rem;
+  align-self: center;
 }
-
-.dice-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin: 10px 0;
-}
-
-.dice {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.die {
-    transition: all 0.3s ease;
-  }
-
-  .die-remove {
-    transition: opacity 0.3s ease;
-    opacity: 0;
-  }
-
-  .die:hover .die-remove {
-    opacity: 1;
-  }
 </style>
 
+<!-- HTML -->
 <div id="app">
-  <main class="h-100">
+<main class="h-100">
   <UtilPanel />
   {#if battleDetails && character && enemy}
     <div class="text-center text-xl font-semibold text-gray-300 mt-4 mb-2 retro-font">
@@ -415,7 +473,6 @@ hr.divider {
         <p>Level: {character.level}</p>
         <p>Attack: {character.attack}</p>
         <p>Defense: {character.defense}</p>
-        <p>Stamina: {character.stamina}</p>
         <p>Speed: {character.speed}</p>
         <div class="health-bar-container">
           <img src="/icons/heart.png" alt="Heart" class="heart-icon" />
@@ -444,92 +501,70 @@ hr.divider {
       </div>
     </div>
 
+     <!-- Add the Start Battle button here -->
+     <div class="flex justify-center my-4">
+      <button on:click={startBattle} class="btn btn-primary">Start Battle</button>
+    </div>
+
+
+    <!-- Dice Roll Section -->
     <div class="dice-section">
       <div class="dice-buttons">
         {#each dieTypes as dieType}
-          <button on:click={() => addDie(dieType)} class="btn btn-primary">
-             D{dieType}
-          </button>
+          <button on:click={() => addDie(dieType)} class="btn btn-primary">D{dieType}</button>
         {/each}
         <button on:click={rollAll} class="btn btn-primary btn-accent">Roll All</button>
       </div>
     
-      <!-- Player Dice -->
-      <!-- Player and Enemy Dice with centered results -->
-  <div class="dice-container">
-    <div class="dice-wrapper">
-      <h2 class="dice-header retro-font">User Dice</h2>
-      {#each dice as die, index (die.id)}
-      <div class="die shadow" 
-           id="die-{die.id}"
-           role="button"
-           tabindex="0"
-           on:mouseenter={() => handleMouseEnter(die.id)}
-           on:mouseleave={() => handleMouseLeave(die.id)}
-           in:fly="{{ y: 50, duration: 300 }}"
-           out:fade="{{ duration: 300 }}"
-           style="transform: scale({$scaleSpring})">
-        <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
-        <p class="die-value">{die.currentValue}</p>
-        <button class="die-remove shadow non-selectable" 
-                id="remove-{die.id}"
-                on:click={() => removeBothDice(die.id)}>
-          <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
-        </button>
-      </div>
-      {#if index < dice.length - 1}
-      <div class="die-separator">+</div>
-    {/if}
-    {/each}
-      <!-- Conditionally display Player Roll Result only if any die has been rolled -->
-      {#if dice.reduce((sum, die) => sum + die.currentValue, 0) > 0}
-        <div class="result-message text-yellow-400 retro-font">
-          You rolled {dice.reduce((sum, die) => sum + die.currentValue, 0)}.
-        </div>
-      {/if}
-    </div>
-
-    <!-- <span class="separator">||</span> -->
-    <!-- <hr class="divider" /> -->
-
-    <div class="dice-wrapper">
-      <h2 class="dice-header retro-font">Enemy Dice</h2>
-      {#each diceEnemy as die, index (die.id)}
-      <div class="die shadow" 
-           id="die-{die.id}"
-           role="button"
-           tabindex="0"
-           on:mouseenter={() => handleMouseEnter(die.id)}
-           on:mouseleave={() => handleMouseLeave(die.id)}
-           in:fly="{{ y: 50, duration: 300 }}"
-           out:fade="{{ duration: 300 }}"
-           style="transform: scale({$scaleSpring})">
-        <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
-        <p class="die-value">{die.currentValue}</p>
-        <button class="die-remove shadow non-selectable" 
-        style="opacity: {die.isHovered ? 1 : 0}"
-        on:click={() => removeBothDice(die.id)}>
-  <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
-</button>
-      </div>
-      {#if index < dice.length - 1}
+      <div class="dice-container">
+        <div class="dice-wrapper">
+          <h2 class="dice-header retro-font">User Dice</h2>
+          {#each dice as die, index (die.id)}
+            <div class="die shadow" id="die-{die.id}" role="button" tabindex="0" on:mouseenter={() => handleMouseEnter(die.id)} on:mouseleave={() => handleMouseLeave(die.id)} in:fly="{{ y: 50, duration: 300 }}" out:fade="{{ duration: 300 }}">
+              <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
+              <p class="die-value">{die.currentValue}</p>
+              <button class="die-remove shadow non-selectable" id="remove-{die.id}" on:click={() => removeBothDice(die.id)}>
+                <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
+              </button>
+            </div>
+            {#if index < dice.length - 1}
               <div class="die-separator">+</div>
             {/if}
-    {/each}
-      <!-- Conditionally display Enemy Roll Result only if any die has been rolled -->
-      {#if diceEnemy.reduce((sum, die) => sum + die.currentValue, 0) > 0}
-        <div class="result-message text-yellow-400 retro-font">
-          Enemy rolled {diceEnemy.reduce((sum, die) => sum + die.currentValue, 0)}.
+          {/each}
+          {#if dice.reduce((sum, die) => sum + die.currentValue, 0) > 0}
+            <div class="result-message text-yellow-400 retro-font">
+              You rolled {dice.reduce((sum, die) => sum + die.currentValue, 0)}.
+            </div>
+          {/if}
+        </div>
+
+        <div class="dice-wrapper">
+          <h2 class="dice-header retro-font">Enemy Dice</h2>
+          {#each diceEnemy as die, index (die.id)}
+            <div class="die shadow" id="die-{die.id}" role="button" tabindex="0" on:mouseenter={() => handleMouseEnter(die.id)} on:mouseleave={() => handleMouseLeave(die.id)} in:fly="{{ y: 50, duration: 300 }}" out:fade="{{ duration: 300 }}">
+              <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="player die" />
+              <p class="die-value">{die.currentValue}</p>
+              <button class="die-remove shadow non-selectable" style="opacity: {die.isHovered ? 1 : 0}" on:click={() => removeBothDice(die.id)}>
+                <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
+              </button>
+            </div>
+            {#if index < diceEnemy.length - 1}
+              <div class="die-separator">+</div>
+            {/if}
+          {/each}
+          {#if diceEnemy.reduce((sum, die) => sum + die.currentValue, 0) > 0}
+            <div class="result-message text-yellow-400 retro-font">
+              Enemy rolled {diceEnemy.reduce((sum, die) => sum + die.currentValue, 0)}.
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      {#if dice.length > 0 && diceEnemy.length > 0}
+        <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
+          {resultMessage}
         </div>
       {/if}
-    </div>
-  </div>
-    
-  {#if dice.length > 0 && diceEnemy.length > 0}
-  <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
-    {resultMessage}
-  </div>
-{/if}
     </div>
   {/if}
 </main>
