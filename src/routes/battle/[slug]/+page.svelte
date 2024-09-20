@@ -201,6 +201,8 @@ function handleMouseLeave(dieId: number) {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 
+  
+  
   .retro-font { font-family: 'DotGothic16', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
   .card { background-color: #000; color: #00ff00; border: 2px solid #008080; border-radius: 8px; padding: 15px; margin: 8px; width: 230px; }
   .health-bar-container { display: flex; align-items: center; margin-top: 16px; }
@@ -246,6 +248,17 @@ function handleMouseLeave(dieId: number) {
   animation: dieSpawn 0.4s ease forwards;
 }
 
+.dice-header {
+    font-size: 1.5rem;
+    color: #00ff00;
+    text-align: center;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00ff00;
+  }
+
 .die-value {
   z-index: 1;
   background-color: white; /* Change background to white for better contrast */
@@ -284,11 +297,12 @@ hr.divider {
 }
 
 .dice-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Centers the dice and result message horizontally */
-}
-
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
 .result-message {
   margin-top: 10px; /* Space between the die and the result message */
   text-align: center; /* Ensures the text is centered */
@@ -341,6 +355,14 @@ hr.divider {
   color: white; /* White color to contrast against the background */
 }
 
+.die-separator {
+    display: inline-block;
+    font-size: 2rem;
+    color: #00ff00;
+    margin: 0 0.5rem;
+    align-self: center;
+  }
+
 /* General layout */
 .dice-section {
   margin-top: 20px;
@@ -377,7 +399,8 @@ hr.divider {
   }
 </style>
 
-<main>
+<div id="app">
+  <main class="h-100">
   <UtilPanel />
   {#if battleDetails && character && enemy}
     <div class="text-center text-xl font-semibold text-gray-300 mt-4 mb-2 retro-font">
@@ -425,7 +448,7 @@ hr.divider {
       <div class="dice-buttons">
         {#each dieTypes as dieType}
           <button on:click={() => addDie(dieType)} class="btn btn-primary">
-            Roll D{dieType}
+             D{dieType}
           </button>
         {/each}
         <button on:click={rollAll} class="btn btn-primary btn-accent">Roll All</button>
@@ -435,7 +458,8 @@ hr.divider {
       <!-- Player and Enemy Dice with centered results -->
   <div class="dice-container">
     <div class="dice-wrapper">
-      {#each dice as die (die.id)}
+      <h2 class="dice-header retro-font">User Dice</h2>
+      {#each dice as die, index (die.id)}
       <div class="die shadow" 
            id="die-{die.id}"
            role="button"
@@ -453,6 +477,9 @@ hr.divider {
           <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
         </button>
       </div>
+      {#if index < dice.length - 1}
+      <div class="die-separator">+</div>
+    {/if}
     {/each}
       <!-- Conditionally display Player Roll Result only if any die has been rolled -->
       {#if dice.reduce((sum, die) => sum + die.currentValue, 0) > 0}
@@ -463,10 +490,11 @@ hr.divider {
     </div>
 
     <!-- <span class="separator">||</span> -->
-    <hr class="divider" />
+    <!-- <hr class="divider" /> -->
 
     <div class="dice-wrapper">
-      {#each diceEnemy as die (die.id)}
+      <h2 class="dice-header retro-font">Enemy Dice</h2>
+      {#each diceEnemy as die, index (die.id)}
       <div class="die shadow" 
            id="die-{die.id}"
            role="button"
@@ -484,6 +512,9 @@ hr.divider {
   <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
 </button>
       </div>
+      {#if index < dice.length - 1}
+              <div class="die-separator">+</div>
+            {/if}
     {/each}
       <!-- Conditionally display Enemy Roll Result only if any die has been rolled -->
       {#if diceEnemy.reduce((sum, die) => sum + die.currentValue, 0) > 0}
@@ -502,4 +533,5 @@ hr.divider {
     </div>
   {/if}
 </main>
+</div>
 

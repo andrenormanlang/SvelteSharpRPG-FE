@@ -15,19 +15,24 @@
   
   
   html, body {
-    background-color: #000; /* Set the background color to black */
+    background-color: #000; /* Set to black */
+    color: #00ff00; /* Green text color */
     margin: 0;
     padding: 0;
     height: 100%;
+}
 
-  }
+#app {
+  background-color: black; /* Ensure it's black */
+  color: #00ff00; /* Text color matching your neon theme */
+  min-height: 100%;
+}
   
  
-  #app {
-    background-color: black;
-    color: #00ff00; /* Optional: Green color for text, matching your neon theme */
-    height: 100%;
-  }
-  
+main {
+  background-color: black; /* Consistent with rest of the page */
+  min-height: 100%;
+  color: #00ff00;
+}
 
   
