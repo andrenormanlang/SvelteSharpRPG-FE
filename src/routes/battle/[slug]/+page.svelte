@@ -11,6 +11,7 @@
   import type { Character } from '../../../types/character';
   import type { Enemy } from '../../../types/enemy';
   import UtilPanel from '../../../components/UtilPanel.svelte';
+  
 
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
@@ -44,47 +45,54 @@
 
   // Add and remove dice functions
   const addDie = (dieType: number) => {
-    dice = [
-      ...dice,
-      {
-        id: currentDieId++,
-        type: dieType,
-        currentValue: 0,
-        isRolling: false,
-        roll: (playSound: boolean) => {
-          if (browser && playSound) playDieSound();
-          const dieId = currentDieId - 1;
-          dice = dice.map(d => (d.id === dieId ? { ...d, isRolling: true } : d));
-          setTimeout(() => {
-            dice = dice.map(d => (d.id === dieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
-          }, 800);
-        }
+  const newDieId = currentDieId++; // Generate a unique ID for both player and enemy dice
+
+  // Add player die
+  dice = [
+    ...dice,
+    {
+      id: newDieId, // Same ID for both
+      type: dieType,
+      currentValue: 0,
+      isRolling: false,
+      roll: (playSound: boolean) => {
+        if (browser && playSound) playDieSound();
+        dice = dice.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
+        setTimeout(() => {
+          dice = dice.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
+        }, 800);
       }
-    ];
-
-    diceEnemy = [
-  ...diceEnemy,
-  {
-    id: currentDieId++, 
-    type: dieType,
-    currentValue: 0,
-    isRolling: false,
-    roll: (playSound: boolean) => {
-      if (browser && playSound) playDieSound(); // Ensure sound plays for enemy dice too
-      const dieId = currentDieId - 1;
-      diceEnemy = diceEnemy.map(d => (d.id === dieId ? { ...d, isRolling: true } : d));
-      setTimeout(() => {
-        diceEnemy = diceEnemy.map(d => (d.id === dieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
-      }, 800);
     }
-  }
-];
-  };
+  ];
 
-  const removeDie = (dieId: number) => {
-    dice = dice.filter(d => d.id != dieId);
-    diceEnemy = diceEnemy.filter(d => d.id != dieId); 
-  };
+  // Add corresponding enemy die
+  diceEnemy = [
+    ...diceEnemy,
+    {
+      id: newDieId, // Same ID for both
+      type: dieType,
+      currentValue: 0,
+      isRolling: false,
+      roll: (playSound: boolean) => {
+        diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
+        setTimeout(() => {
+          diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
+        }, 800);
+      }
+    }
+  ];
+};
+
+
+ // Remove both player and enemy dice based on the id
+ const removeBothDice = (dieId: number) => {
+  // Remove the player's die with the matching id
+  dice = dice.filter(d => d.id !== dieId);
+
+  // Remove the enemy's die with the same id
+  diceEnemy = diceEnemy.filter(d => d.id !== dieId);
+};
+
 
   // Roll all dice function
   const rollAll = () => {
@@ -338,25 +346,35 @@
       </div>
 
      <!-- Player Dice -->
-<div class="dice">
-  {#each dice as die (die.id)}
-    <div class="die shadow">
-      <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="die" />
-      <p class="die-value">{die.currentValue}</p>
-      <button on:click={() => removeDie(die.id)}>Remove Die</button>
-    </div>
-  {/each}
-</div>
+<!-- Player Dice -->
+<!-- Player Dice -->
 
-<!-- Enemy Dice -->
-<div class="dice">
-  {#each diceEnemy as die (die.id)}
-    <div class="die shadow">
-      <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
-      <p class="die-value">{die.currentValue}</p>
-    </div>
-  {/each}
-</div>
+      <!-- Player Dice -->
+      <div class="dice">
+        {#each dice as die (die.id)}
+        <div class="die shadow">
+          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="die" />
+          <p class="die-value">{die.currentValue}</p>
+          <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
+            <img src="/icons/remove-icon.svg" alt="Remove Die" width="20" height="20" />
+          </button>
+        </div>
+        {/each}
+      </div>
+
+      <!-- Enemy Dice -->
+      <div class="dice">
+        {#each diceEnemy as die (die.id)}
+        <div class="die shadow">
+          <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
+          <p class="die-value">{die.currentValue}</p>
+          <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
+            <img src="/icons/remove-icon.svg" alt="Remove Die" width="20" height="20" />
+          </button>
+        </div>
+        {/each}
+      </div>
+
 
       <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
         {resultMessage}
