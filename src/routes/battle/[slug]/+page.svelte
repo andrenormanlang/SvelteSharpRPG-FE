@@ -73,20 +73,20 @@
 
   // Add corresponding enemy die
   diceEnemy = [
-    ...diceEnemy,
-    {
-      id: newDieId, // Same ID for both
-      type: dieType,
-      currentValue: 0,
-      isRolling: false,
-      roll: (playSound: boolean) => {
-        diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
-        setTimeout(() => {
-          diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
-        }, 800);
-      }
+  ...diceEnemy,
+  {
+    id: newDieId, // Same ID for both
+    type: dieType,
+    currentValue: 0,
+    isRolling: false,
+    roll: (playSound: boolean) => {
+      diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, isRolling: true } : d));
+      setTimeout(() => {
+        diceEnemy = diceEnemy.map(d => (d.id === newDieId ? { ...d, currentValue: rollDie(d.type), isRolling: false } : d));
+      }, 800);
     }
-  ];
+  }
+];
 };
 
 
@@ -120,7 +120,7 @@ function handleMouseLeave(dieId: number) {
 
   // Roll all dice function
   const rollAll = () => {
-  if (dice.length > 0) {
+  if (dice.length > 0 && diceEnemy.length > 0) {
     playDiceSound();
 
     // Set both player and enemy dice rolling
@@ -129,16 +129,12 @@ function handleMouseLeave(dieId: number) {
 
     // Use a timeout to ensure the results are calculated after the dice finish rolling
     setTimeout(() => {
-      // After the dice animations, calculate the totals
+      // Calculate the player's dice roll
       const playerRoll = dice.reduce((sum, die) => sum + die.currentValue, 0);
+      // Calculate the enemy's dice roll
       const enemyRoll = diceEnemy.reduce((sum, die) => sum + die.currentValue, 0);
 
-      // Only display the result outcome without repeating the roll values
-      if (dice.length === 0 || diceEnemy.length === 0) {
-        resultMessage = ''; // Clear the result message if no dice are left
-        return; // Exit early if no dice
-      }
-
+      // Only display the result outcome if both player and enemy dice exist
       if (playerRoll === enemyRoll) {
         resultMessage = `It's a tie!`; // No health deduction
       } else if (playerRoll > enemyRoll) {
@@ -160,6 +156,7 @@ function handleMouseLeave(dieId: number) {
     }, 1000); // Delay the result calculation to match the dice roll animation duration
   }
 };
+
 
 
   // Fetch battle and character data
@@ -469,7 +466,7 @@ hr.divider {
     <hr class="divider" />
 
     <div class="dice-wrapper">
-      {#each dice as die (die.id)}
+      {#each diceEnemy as die (die.id)}
       <div class="die shadow" 
            id="die-{die.id}"
            role="button"
