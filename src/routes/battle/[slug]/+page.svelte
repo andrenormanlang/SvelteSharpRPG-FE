@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import axios from 'axios';
   import { page } from '$app/stores';  // To get URL params
-  import image from '../../../lib/images/heart.png';  
+  // import image from '../../../lib/images/heart.png';  
 
   import type { Battle } from '../../../types/battle';
   import type { Character } from '../../../types/character';
@@ -185,7 +185,7 @@
 
          <!-- Player health bar -->
          <div class="health-bar-container">
-          <img src={image} alt="Heart" class="heart-icon" />
+          <img src="/icons/heart.png" alt="Heart" class="heart-icon" />
           <div class="health-bar">
             <div class={`health-fill ${healthBarColor(playerHealth)}`} style="width: {playerHealth}%"></div>
           </div>
@@ -205,7 +205,7 @@
 
         <!-- Enemy health bar -->
         <div class="health-bar-container">
-          <img src={image} alt="Heart" class="heart-icon" />
+          <img src="/icons/heart.png"alt="Heart" class="heart-icon" />
           <div class="health-bar">
             <div class={`health-fill ${healthBarColor(enemyHealth)}`} style="width: {enemyHealth}%"></div>
           </div>
