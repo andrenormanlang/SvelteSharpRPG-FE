@@ -8,5 +8,6 @@ export interface Enemy {
     experience: number;
     speed: number;
     experienceReward: number;
+    criticalHitChance: number;
   }
   

@@ -97,23 +97,33 @@
 
 
   // Roll all dice function
-  const rollAll = () => {
-    if (dice.length > 0) {
-      playDiceSound();
-      dice.forEach((die) => die.roll(true));
-      diceEnemy.forEach((die) => die.roll(false));
+ const rollAll = () => {
+  if (dice.length > 0) {
+    playDiceSound();
 
+    // Set both player and enemy dice rolling
+    dice.forEach((die) => die.roll(true));
+    diceEnemy.forEach((die) => die.roll(false));
+
+    // Use a timeout to ensure the results are calculated after the dice finish rolling
+    setTimeout(() => {
+      // After the dice animations, calculate the totals
       const playerRoll = dice.reduce((sum, die) => sum + die.currentValue, 0);
       const enemyRoll = diceEnemy.reduce((sum, die) => sum + die.currentValue, 0);
 
+      // Display the total rolls
+      resultMessage = `You rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
+
+      // Check who won the round and update the result message
       if (playerRoll > enemyRoll) {
         enemyHealth -= playerRoll;
-        resultMessage = `You won this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
+        resultMessage += ` You won this round!`; // Update result if player wins
       } else {
         playerHealth -= enemyRoll;
-        resultMessage = `You lost this round! Rolled ${playerRoll}. Enemy rolled ${enemyRoll}.`;
+        resultMessage += ` You lost this round!`; // Update result if player loses
       }
 
+      // Check if the battle is over based on the health conditions
       if (playerHealth <= 0) {
         resultMessage = 'You lost the battle!';
         isBattleOver = true;
@@ -121,8 +131,10 @@
         resultMessage = 'You won the battle!';
         isBattleOver = true;
       }
-    }
-  };
+    }, 1000); // Delay the result calculation to match the dice roll animation duration
+  }
+};
+
 
   // Fetch battle and character data
   $: slug = $page.params.slug;
@@ -200,7 +212,7 @@
 }
 
 .die-icon-anim {
-  animation: spin 1s ease-in-out !important;
+  animation: spin 2s ease-in-out !important;
 }
 
 .die-icon {
@@ -213,30 +225,33 @@
 
 .die-value {
   z-index: 1;
-  background-color: var(--panel-color);
-  padding: 0.2rem;
-  display: grid;
-  place-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.3rem;
+  background-color: white; /* Change background to white for better contrast */
+  color: black; /* Change text color to black for better contrast */
+  font-weight: bold; /* Make the text bold for easier readability */
+  padding: 0.5rem; /* Add padding to give space around the text */
+  border-radius: 0.5rem; /* Rounded corners for a nicer look */
+  font-size: 2rem; /* Larger font size for better readability */
 }
 
 .die {
-  height: 10rem;
-  max-height: 10rem;
-  width: 10rem;
-  max-width: 10rem;
+  height: 12rem; /* Increased height */
+  width: 12rem; /* Increased width */
   position: relative;
-  transition: all 0.2s ease-out;
   display: grid;
   place-items: center;
   padding: 1rem;
   border-radius: 0.3rem;
-  margin-right: 1rem;
-  margin-bottom: 1rem;
+  margin-right: 0.5rem; /* Adjust margins for proper spacing */
+  margin-left: 0.5rem;
   background-color: var(--panel-color);
 }
+
+  .dice-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+  }
 
 .die:hover .die-remove {
   display: grid;
@@ -278,6 +293,11 @@
   right: 0;
 }
 
+.separator {
+  font-size: 2rem; /* Larger size for better visibility */
+  color: white; /* White color to contrast against the background */
+}
+
 /* General layout */
 .dice-section {
   margin-top: 20px;
@@ -313,8 +333,11 @@
       <div class="card retro-font">
         <h2 class="text-center text-lg mb-2">{character.name}</h2>
         <p>Class: {character.className}</p>
+        <p>Level: {character.level}</p>
         <p>Attack: {character.attack}</p>
-        <p>Mana: {character.mana}</p>
+        <p>Defense: {character.defense}</p>
+        <p>Stamina: {character.stamina}</p>
+        <p>Speed: {character.speed}</p>
         <div class="health-bar-container">
           <img src="/icons/heart.png" alt="Heart" class="heart-icon" />
           <div class="health-bar">
@@ -328,6 +351,10 @@
         <h2 class="text-center text-lg mb-2">{enemy.name}</h2>
         <p>Type: {enemy.type}</p>
         <p>Attack: {enemy.attack}</p>
+        <p>Defense: {enemy.defense}</p>
+        <p>Speed: {enemy.speed}</p>
+        <p>Reward: {enemy.experienceReward}</p>
+        <p>Hit Chance: {enemy.criticalHitChance}</p>
         <div class="health-bar-container">
           <img src="/icons/heart.png" alt="Heart" class="heart-icon" />
           <div class="health-bar">
@@ -338,21 +365,18 @@
       </div>
     </div>
 
-    <!-- Dice Section -->
     <div class="dice-section">
       <div class="dice-buttons">
         {#each dieTypes as dieType}
-          <button on:click={() => addDie(dieType)}>Roll D{dieType}</button>
+          <button on:click={() => addDie(dieType)} class="btn btn-primary">
+            Roll D{dieType}
+          </button>
         {/each}
-        <button on:click={rollAll}>Roll all dice</button>
+        <button on:click={rollAll} class="btn btn-primary btn-accent">Roll All</button>
       </div>
-
-     <!-- Player Dice -->
-<!-- Player Dice -->
-<!-- Player Dice -->
-
+    
       <!-- Player Dice -->
-      <div class="dice">
+      <div class="dice-container">
         {#each dice as die (die.id)}
         <div class="die shadow">
           <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="die" />
@@ -362,23 +386,18 @@
           </button>
         </div>
         {/each}
-      </div>
-
-      <!-- Enemy Dice -->
-      <div class="dice">
+        <span class="separator">||</span>
         {#each diceEnemy as die (die.id)}
         <div class="die shadow">
           <img class="{die.isRolling ? 'die-icon-anim die-icon' : 'die-icon'}" src="/icons/d{die.type}.svg" alt="enemy die" />
           <p class="die-value">{die.currentValue}</p>
           <button class="die-remove shadow non-selectable" on:click={() => removeBothDice(die.id)}>
             <Icon icon="mdi:close-box-outline" style="color: #e04410" width="20" height="20" />
-           
           </button>
         </div>
         {/each}
       </div>
-
-
+    
       <div class="text-base font-bold text-center my-3 text-yellow-400 retro-font">
         {resultMessage}
       </div>
