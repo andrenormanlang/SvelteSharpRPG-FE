@@ -28,6 +28,7 @@ Legends of Runestone RPG 🪨🧙‍♂️ project is powered by a custom-built 
 #### Links
 
 Backend Repository: [C# RPG API Repository](https://github.com/andrenormanlang/csharp-rpg-api)
+
 Hosted API Endpoint: [Azure deployed API](https://csharprpg.azurewebsites.net/api/)
 
 To run the backend, first clone the repository C# RPG API and follow the instructions in its README file.
