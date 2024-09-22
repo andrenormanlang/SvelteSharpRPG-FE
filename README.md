@@ -112,7 +112,7 @@ After running the frontend and backend, you can access the game in your browser 
 - Integrate AI to adjust enemy difficulty dynamically based on player level or performance.
 - **Update Battle Logic**: Introduce unique combat modes for different character classes:
 
-🧙‍♂️ **Mages**
+🧙‍♂️ **##Mages**
 
 ### Spellcasting
 Mages can cast a variety of spells based on their level and mana pool. The spells are derived from Goetia and Enochian magic, each with distinct effects.
