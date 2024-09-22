@@ -111,11 +111,134 @@ After running the frontend and backend, you can access the game in your browser 
 - Expand the combat system to include multiple rounds of battle, where players can lose or gain points based on their dice rolls.
 - Integrate AI to adjust enemy difficulty dynamically based on player level or performance.
 - **Update Battle Logic**: Introduce unique combat modes for different character classes:
-  - **Mages**: Can cast spells based on their level and mana. Spells will be drawn from a pool of Goetia and Enochian magic, with each spell having unique effects (e.g., damage, healing).
-  - **Paladins**: Will have access to special weapons and armor, which grant bonuses or special abilities during combat.
-  - **Warriors**: Focus on raw physical attacks with powerful strikes and defensive maneuvers.
-  - **Rogues**: Utilize stealth attacks, traps, and evasion techniques to outmaneuver enemies.
-  
+
+🧙‍♂️ **Mages**
+
+### Spellcasting
+Mages can cast a variety of spells based on their level and mana pool. The spells are derived from Goetia and Enochian magic, each with distinct effects.
+
+#### Goetia Magic
+- Summoning demons, casting curses, and manipulating shadows. For example, a high-level spell might summon a powerful demon to fight alongside the mage.
+
+#### Enochian Magic
+- Focuses on celestial and elemental forces, such as calling down lightning, healing allies, or creating protective barriers.
+
+### Mana Management
+Mages must carefully manage their mana, as casting powerful spells depletes their resources. Mana potions and regeneration abilities can help maintain their spellcasting capabilities.
+
+🛡️ **Paladins**
+
+### Special Weapons and Armor
+Paladins have access to unique weapons and armor that provide combat bonuses or special abilities.
+
+#### Holy Weapons
+- These weapons deal extra damage to undead and demonic enemies. For example, a “Sword of Light” might have a chance to blind enemies on hit.
+
+#### Blessed Armor
+- Provides enhanced protection and may grant abilities like damage reflection or temporary invulnerability.
+
+### Divine Abilities
+Paladins can call upon divine powers to heal allies, smite enemies, or create protective auras.
+
+⚔️ **Warriors**
+
+### Physical Combat
+Warriors excel in close-quarters combat, using their strength and endurance to overpower enemies.
+
+#### Powerful Strikes
+- Abilities like “Cleave” or “Whirlwind” allow warriors to hit multiple enemies with a single attack.
+
+#### Defensive Maneuvers
+- Skills such as “Shield Block” or “Parry” reduce incoming damage and increase survivability.
+
+### Rage Mechanic
+Warriors build up rage through combat, which can be spent on powerful abilities or to enter a berserk state, increasing their damage output.
+
+🪓 **Berserkers**
+
+### Frenzied Combat
+Berserkers thrive in the chaos of battle, using their rage to fuel devastating attacks.
+
+### Berserk Mode
+Entering a berserk state increases attack speed and damage but reduces defense. For example, a “Rage Burst” ability might temporarily double attack power at the cost of taking more damage.
+
+### Brutal Strikes
+Abilities like “Savage Slash” or “Frenzied Assault” deal massive damage to single targets or multiple enemies in a wide arc.
+
+### Rage Management
+Berserkers build up rage through taking and dealing damage, which can be spent on powerful abilities or to sustain their berserk state.
+
+🗡️ **Rogues**
+
+### Stealth and Evasion
+Rogues rely on agility and cunning to outmaneuver opponents.
+
+#### Stealth Attacks
+- Abilities like “Backstab” or “Ambush” deal extra damage when attacking from stealth.
+
+#### Traps and Gadgets
+- Rogues can set traps to immobilize or damage enemies, and use gadgets like smoke bombs to escape dangerous situations.
+
+#### Evasion Techniques
+- Skills such as “Dodge” or “Shadowstep” allow rogues to avoid attacks and reposition themselves in battle.
+
+
+🏹 **Rangers**
+
+### Ranged Combat
+Rangers specialize in long-range attacks using bows or crossbows.
+
+### Precision Shots
+- Abilities like “Snipe” or “Multi-Shot” allow rangers to deal high damage from a distance.
+
+### Animal Companions
+- Rangers can summon and control animal companions to assist in combat, each with unique abilities.
+
+### Nature Magic
+- Rangers can use nature-based spells to heal allies, entangle enemies, or enhance their own abilities.
+
+💀 **Necromancers**
+
+### Dark Magic
+Necromancers wield dark magic to summon undead minions and cast debilitating curses.
+
+### Summoning
+- Abilities like “Raise Skeletons” or “Summon Wraith” bring forth undead creatures to fight for the necromancer.
+
+### Curses
+- Spells such as “Curse of Weakness” or “Plague” weaken enemies and spread disease.
+
+### Life Drain
+- Necromancers can drain the life force from enemies to heal themselves or replenish their mana.
+
+🌿 **Druids**
+
+### Shape-Shifting
+Druids can transform into various animal forms, each with unique abilities.
+
+#### Bear Form
+- Increases strength and durability, making the druid a formidable melee combatant.
+
+#### Eagle Form
+- Enhances speed and agility, allowing for quick attacks and evasive maneuvers.
+
+### Elemental Magic
+Druids can harness the power of nature to cast spells that control the elements, such as summoning storms or causing earthquakes.
+
+🧘‍♂️ **Monks**
+
+### Martial Arts
+Monks are masters of hand-to-hand combat, using their agility and inner strength to defeat enemies.
+
+### Chi Techniques
+Monks harness their inner energy, or chi, to perform extraordinary feats. For example, “Chi Burst” might release a wave of energy that damages all enemies in a line.
+
+### Stances
+Different stances provide various combat benefits. For instance, “Tiger Stance” increases attack speed and critical hit chance, while “Crane Stance” enhances evasion and counterattack abilities.
+
+### Inner Peace
+Monks maintain balance and focus through meditation and discipline, allowing them to heal themselves and allies or to resist harmful effects.
+
 ### Multiplayer 🌐🎮
 
 - Implement real-time multiplayer using WebSockets (e.g., Socket.IO) to allow players to team up in battles. 🌍
