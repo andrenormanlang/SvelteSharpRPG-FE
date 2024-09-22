@@ -112,7 +112,7 @@ After running the frontend and backend, you can access the game in your browser 
 - Integrate AI to adjust enemy difficulty dynamically based on player level or performance.
 - **Update Battle Logic**: Introduce unique combat modes for different character classes:
 
-🧙‍♂️ **##Mages**
+🧙‍♂️ **MAGES**
 
 ### Spellcasting
 Mages can cast a variety of spells based on their level and mana pool. The spells are derived from Goetia and Enochian magic, each with distinct effects.
@@ -126,7 +126,7 @@ Mages can cast a variety of spells based on their level and mana pool. The spell
 ### Mana Management
 Mages must carefully manage their mana, as casting powerful spells depletes their resources. Mana potions and regeneration abilities can help maintain their spellcasting capabilities.
 
-🛡️ **Paladins**
+🛡️ **PALADINS**
 
 ### Special Weapons and Armor
 Paladins have access to unique weapons and armor that provide combat bonuses or special abilities.
@@ -140,7 +140,7 @@ Paladins have access to unique weapons and armor that provide combat bonuses or 
 ### Divine Abilities
 Paladins can call upon divine powers to heal allies, smite enemies, or create protective auras.
 
-⚔️ **Warriors**
+⚔️ **WARRIORS**
 
 ### Physical Combat
 Warriors excel in close-quarters combat, using their strength and endurance to overpower enemies.
@@ -154,7 +154,7 @@ Warriors excel in close-quarters combat, using their strength and endurance to o
 ### Rage Mechanic
 Warriors build up rage through combat, which can be spent on powerful abilities or to enter a berserk state, increasing their damage output.
 
-🪓 **Berserkers**
+🪓 **BERSERKERS**
 
 ### Frenzied Combat
 Berserkers thrive in the chaos of battle, using their rage to fuel devastating attacks.
@@ -168,7 +168,7 @@ Abilities like “Savage Slash” or “Frenzied Assault” deal massive damage 
 ### Rage Management
 Berserkers build up rage through taking and dealing damage, which can be spent on powerful abilities or to sustain their berserk state.
 
-🗡️ **Rogues**
+🗡️ **ROGUES**
 
 ### Stealth and Evasion
 Rogues rely on agility and cunning to outmaneuver opponents.
@@ -183,7 +183,7 @@ Rogues rely on agility and cunning to outmaneuver opponents.
 - Skills such as “Dodge” or “Shadowstep” allow rogues to avoid attacks and reposition themselves in battle.
 
 
-🏹 **Rangers**
+🏹 **RANGERS**
 
 ### Ranged Combat
 Rangers specialize in long-range attacks using bows or crossbows.
@@ -197,7 +197,7 @@ Rangers specialize in long-range attacks using bows or crossbows.
 ### Nature Magic
 - Rangers can use nature-based spells to heal allies, entangle enemies, or enhance their own abilities.
 
-💀 **Necromancers**
+💀 **NECROMANCERS**
 
 ### Dark Magic
 Necromancers wield dark magic to summon undead minions and cast debilitating curses.
@@ -211,7 +211,7 @@ Necromancers wield dark magic to summon undead minions and cast debilitating cur
 ### Life Drain
 - Necromancers can drain the life force from enemies to heal themselves or replenish their mana.
 
-🌿 **Druids**
+🌿 **DRUIDS**
 
 ### Shape-Shifting
 Druids can transform into various animal forms, each with unique abilities.
@@ -225,7 +225,7 @@ Druids can transform into various animal forms, each with unique abilities.
 ### Elemental Magic
 Druids can harness the power of nature to cast spells that control the elements, such as summoning storms or causing earthquakes.
 
-🧘‍♂️ **Monks**
+🧘‍♂️ **MONKS**
 
 ### Martial Arts
 Monks are masters of hand-to-hand combat, using their agility and inner strength to defeat enemies.
