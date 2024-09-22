@@ -14,6 +14,7 @@
   import Icon from '@iconify/svelte';
   import { fade, fly } from 'svelte/transition';
   import { spring } from 'svelte/motion';
+  
 
   let battleDetails: Battle | null = null;
   let character: Character | null = null;
@@ -328,7 +329,7 @@ function handleMouseLeave(dieId: number) {
 }
 
 .die-icon-anim {
-  animation: spin 2s ease-in-out !important;
+  animation: spin 3s ease-in-out !important;
 }
 
 .die-icon {
@@ -352,12 +353,18 @@ function handleMouseLeave(dieId: number) {
 
 .die-value {
   z-index: 1;
-  background-color: white;
-  color: black;
+  font-family: 'DotGothic16', sans-serif;
   font-weight: bold;
+  color: #fbf013; /* Neon magenta color */
   padding: 0.5rem;
   border-radius: 0.5rem;
   font-size: 2rem;
+
+  /* Neon glow effect */
+  text-shadow: 0 0 5px hsl(79, 72%, 45%), /* Main glow */
+               0 0 20px hsl(70, 94%, 51%),          
+               0 0 30px hsl(75, 100%, 50%)
+              
 }
 
 .die {

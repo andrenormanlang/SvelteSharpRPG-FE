@@ -109,7 +109,12 @@ After running the frontend and backend, you can access the game in your browser 
 
 - Expand the combat system to include multiple rounds of battle, where players can lose or gain points based on their dice rolls.
 - Integrate AI to adjust enemy difficulty dynamically based on player level or performance.
-
+- **Update Battle Logic**: Introduce unique combat modes for different character classes:
+  - **Mages**: Can cast spells based on their level and mana. Spells will be drawn from a pool of Goetia and Enochian magic, with each spell having unique effects (e.g., damage, healing).
+  - **Paladins**: Will have access to special weapons and armor, which grant bonuses or special abilities during combat.
+  - **Warriors**: Focus on raw physical attacks with powerful strikes and defensive maneuvers.
+  - **Rogues**: Utilize stealth attacks, traps, and evasion techniques to outmaneuver enemies.
+  
 ### Multiplayer 🌐🎮
 
 - Implement real-time multiplayer using WebSockets (e.g., Socket.IO) to allow players to team up in battles. 🌍
