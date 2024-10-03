@@ -4,7 +4,8 @@
   let password = '';
   let error = ''; // Declare error here
 
-  const baseURL = 'https://localhost:5000/api/'; // Ensure baseURL is defined
+  // Access the base URL from environment variables
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
   const dispatch = createEventDispatcher();
 
