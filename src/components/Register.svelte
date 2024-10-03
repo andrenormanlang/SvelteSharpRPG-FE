@@ -8,7 +8,7 @@
 
   const handleRegister = async () => {
     try {
-      const response = await fetch('https://csharprpg.azurewebsites.net/api/User/register', {
+      const response = await fetch('https://csharp-rpg-api.onrender.com/api/User/register', {
         method: 'POST',
         body: JSON.stringify({ email, password, name }),
       });

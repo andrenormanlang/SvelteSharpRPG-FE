@@ -12,7 +12,7 @@
 
   onMount(async () => {
     try {
-      const response = await axios.get('https://csharprpg.azurewebsites.net/api/class');
+      const response = await axios.get('https://csharp-rpg-api.onrender.com/api/class');
       classes = response.data;
     } catch (error) {
       console.error('Failed to fetch classes:', error);
@@ -26,7 +26,7 @@
     }
 
     try {
-      const response = await axios.post('https://csharprpg.azurewebsites.net/api/character', {
+      const response = await axios.post('https://csharp-rpg-api.onrender.com/api/character', {
         name: characterName,
         classId,
         userId,
